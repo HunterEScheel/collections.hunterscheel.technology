@@ -30,12 +30,11 @@ create table contributions (
   contributor_name text not null,
   amount numeric(10,2) not null check (amount > 0),
   firework_type firework_type not null,
-  firework_other text,
+  firework_other text, -- optional specific request (e.g. "willows"); required for 'other'
   created_at timestamptz not null default now(),
-  -- "other" requires a description; named types must not have one
   constraint firework_other_required check (
-    (firework_type = 'other' and firework_other is not null and length(trim(firework_other)) > 0)
-    or (firework_type <> 'other' and firework_other is null)
+    firework_type <> 'other'
+    or (firework_other is not null and length(trim(firework_other)) > 0)
   )
 );
 

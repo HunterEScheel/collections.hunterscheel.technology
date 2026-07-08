@@ -36,7 +36,7 @@ export function ContributionForm({ secret, contributorName, onSubmitted, onInval
       p_name: contributorName,
       p_amount: parsedAmount,
       p_type: fireworkType,
-      p_other: fireworkType === 'other' ? otherText.trim() : null,
+      p_other: otherText.trim() || null,
     })
     setSubmitting(false)
 
@@ -91,18 +91,16 @@ export function ContributionForm({ secret, contributorName, onSubmitted, onInval
 
       <FireworkPreview type={fireworkType} />
 
-      {fireworkType === 'other' && (
-        <label>
-          Describe your firework
-          <input
-            type="text"
-            value={otherText}
-            onChange={(e) => setOtherText(e.target.value)}
-            placeholder="e.g. purple strobe rockets"
-            required
-          />
-        </label>
-      )}
+      <label>
+        {fireworkType === 'other' ? 'Describe your firework' : 'Specific request (optional)'}
+        <input
+          type="text"
+          value={otherText}
+          onChange={(e) => setOtherText(e.target.value)}
+          placeholder="e.g. willows, chrysanthemums, tiger tails"
+          required={fireworkType === 'other'}
+        />
+      </label>
 
       {error && <p className="error">{error}</p>}
       {success && <p className="success">Contribution recorded — thank you! 🎆</p>}

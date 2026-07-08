@@ -45,10 +45,15 @@ export interface Purchase {
 }
 
 export function fireworkLabel(type: FireworkType, other?: string | null): string {
-  if (type === 'buyers_choice') return "Buyer's choice"
-  if (type === 'other') return other ? `Other: ${other}` : 'Other'
-  if (type === 'comets') return 'Risers' // umbrella for comets, tails, and pearls
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  const base =
+    type === 'buyers_choice'
+      ? "Buyer's choice"
+      : type === 'other'
+        ? 'Other'
+        : type === 'comets'
+          ? 'Risers' // umbrella for comets, tails, and pearls
+          : type.charAt(0).toUpperCase() + type.slice(1)
+  return other ? `${base} — ${other}` : base
 }
 
 export function formatMoney(n: number): string {
