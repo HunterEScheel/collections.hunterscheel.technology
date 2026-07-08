@@ -183,6 +183,21 @@ th {
   font-weight: 500;
 }
 
+.row-del {
+  background: transparent;
+  color: var(--error);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+.row-del:hover {
+  border-color: var(--error);
+  filter: none;
+}
+
 code {
   background: var(--bg);
   border: 1px solid var(--border);

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useEventSession } from '../lib/eventSession'
 import { fireworkLabel, formatMoney } from '../lib/types'
 import type { Contribution, Purchase } from '../lib/types'
 import { PasscodeGate } from '../components/PasscodeGate'
+import { AddPurchaseForm } from '../components/AddPurchaseForm'
 
 export function ReceiptsPage() {
   return (
@@ -17,19 +18,31 @@ function ReceiptsContent() {
   const { session, lock } = useEventSession()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [pledged, setPledged] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
   const secret = session!.secret
+  const eventId = session!.event.id
+
+  // Admins (signed in via /admin) can record purchases right here.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setIsAdmin(Boolean(data.session)))
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => setIsAdmin(Boolean(s)))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  const load = useCallback(async () => {
+    const [p, c] = await Promise.all([
+      supabase.rpc('get_purchases', { p_secret: secret }),
+      supabase.rpc('get_contributions', { p_secret: secret }),
+    ])
+    if (p.error?.message.includes('INVALID_SECRET') || c.error?.message.includes('INVALID_SECRET'))
+      return lock()
+    setPurchases((p.data ?? []) as Purchase[])
+    setPledged(((c.data ?? []) as Contribution[]).reduce((sum, r) => sum + Number(r.amount), 0))
+  }, [secret, lock])
 
   useEffect(() => {
-    supabase.rpc('get_purchases', { p_secret: secret }).then(({ data, error }) => {
-      if (error?.message.includes('INVALID_SECRET')) return lock()
-      setPurchases((data ?? []) as Purchase[])
-    })
-    supabase.rpc('get_contributions', { p_secret: secret }).then(({ data, error }) => {
-      if (error?.message.includes('INVALID_SECRET')) return lock()
-      const rows = (data ?? []) as Contribution[]
-      setPledged(rows.reduce((sum, r) => sum + Number(r.amount), 0))
-    })
-  }, [secret, lock])
+    load()
+  }, [load])
 
   // cost is per unit; line total = cost * quantity
   const spent = purchases.reduce((sum, p) => sum + Number(p.cost) * p.quantity, 0)
@@ -84,6 +97,8 @@ function ReceiptsContent() {
           </div>
         )}
       </div>
+
+      {isAdmin && <AddPurchaseForm eventId={eventId} onAdded={load} />}
     </div>
   )
 }
