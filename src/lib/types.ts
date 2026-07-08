@@ -1,14 +1,13 @@
 export const FIREWORK_TYPES = [
-  'fountain',
-  'willow',
-  'chrysanthemum',
-  'brocade',
-  'candles',
-  'batteries',
+  'mortars',
+  'comets',
   'parachutes',
-  'fish',
+  'fountain',
   'other',
+  'buyers_choice',
 ] as const
+
+export const DEFAULT_FIREWORK_TYPE = 'buyers_choice' as const
 
 export type FireworkType = (typeof FIREWORK_TYPES)[number]
 
@@ -46,6 +45,7 @@ export interface Purchase {
 }
 
 export function fireworkLabel(type: FireworkType, other?: string | null): string {
+  if (type === 'buyers_choice') return "Buyer's choice"
   if (type === 'other') return other ? `Other: ${other}` : 'Other'
   return type.charAt(0).toUpperCase() + type.slice(1)
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
-import { FIREWORK_TYPES, fireworkLabel } from '../lib/types'
+import { DEFAULT_FIREWORK_TYPE, FIREWORK_TYPES, fireworkLabel } from '../lib/types'
 import type { FireworkType } from '../lib/types'
 import { FireworkPreview } from './FireworkPreview'
 
@@ -14,7 +14,7 @@ interface Props {
 
 export function ContributionForm({ secret, contributorName, onSubmitted, onInvalidSecret }: Props) {
   const [amount, setAmount] = useState('')
-  const [fireworkType, setFireworkType] = useState<FireworkType>('fountain')
+  const [fireworkType, setFireworkType] = useState<FireworkType>(DEFAULT_FIREWORK_TYPE)
   const [otherText, setOtherText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +52,7 @@ export function ContributionForm({ secret, contributorName, onSubmitted, onInval
 
     setSuccess(true)
     setAmount('')
-    setFireworkType('fountain')
+    setFireworkType(DEFAULT_FIREWORK_TYPE)
     setOtherText('')
     onSubmitted()
   }

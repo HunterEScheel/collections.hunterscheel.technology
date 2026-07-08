@@ -151,7 +151,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
               {contributions.map((c) => (
                 <li key={c.id}>
                   <strong>{c.contributor_name}</strong> — {formatMoney(Number(c.amount))}
-                  <span className="muted"> · {fireworkLabel(c.firework_type, c.firework_other)}</span>
+                  <span className="muted"> · {fireworkLabel(c.firework_type)}</span>
                   <button className="row-del" onClick={() => deleteRow('contributions', c.id)}>
                     Delete
                   </button>
