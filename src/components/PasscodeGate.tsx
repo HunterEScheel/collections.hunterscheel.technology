@@ -45,7 +45,8 @@ export function PasscodeGate({ children }: { children: ReactNode }) {
       <label>
         Passcode
         <input
-          type="password"
+          type="text"
+          autoComplete="off"
           value={passcode}
           onChange={(e) => setPasscode(e.target.value)}
           placeholder="Ask the organizer"
