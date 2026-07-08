@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import { FIREWORK_TYPES, fireworkLabel } from '../lib/types'
+import { FIREWORK_TYPES, fireworkLabel, formatMoney } from '../lib/types'
 import type { AdminEvent, FireworkType } from '../lib/types'
 import { LoginForm } from '../components/LoginForm'
 
@@ -202,13 +202,16 @@ function AddPurchaseForm({ events }: { events: AdminEvent[] }) {
         </select>
       </label>
       <label>
-        Cost (USD)
-        <input type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required />
+        Cost per unit (USD)
+        <input type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="12.99" required />
       </label>
       <label>
-        Quantity
+        Qty
         <input type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
       </label>
+      {Number(cost) > 0 && Number(quantity) > 0 && (
+        <p className="muted">Total: {formatMoney(Number(cost) * Number(quantity))}</p>
+      )}
       <label>
         Notes
         <input value={notes} onChange={(e) => setNotes(e.target.value)} />

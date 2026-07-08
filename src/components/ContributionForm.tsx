@@ -6,12 +6,12 @@ import type { FireworkType } from '../lib/types'
 
 interface Props {
   secret: string
+  contributorName: string
   onSubmitted: () => void
   onInvalidSecret: () => void
 }
 
-export function ContributionForm({ secret, onSubmitted, onInvalidSecret }: Props) {
-  const [name, setName] = useState('')
+export function ContributionForm({ secret, contributorName, onSubmitted, onInvalidSecret }: Props) {
   const [amount, setAmount] = useState('')
   const [fireworkType, setFireworkType] = useState<FireworkType>('fountain')
   const [otherText, setOtherText] = useState('')
@@ -25,7 +25,6 @@ export function ContributionForm({ secret, onSubmitted, onInvalidSecret }: Props
     setSuccess(false)
 
     const parsedAmount = Number(amount)
-    if (!name.trim()) return setError('Please enter your name.')
     if (!parsedAmount || parsedAmount <= 0) return setError('Please enter a valid amount.')
     if (fireworkType === 'other' && !otherText.trim())
       return setError('Please describe the firework you want.')
@@ -33,7 +32,7 @@ export function ContributionForm({ secret, onSubmitted, onInvalidSecret }: Props
     setSubmitting(true)
     const { error: rpcError } = await supabase.rpc('submit_contribution', {
       p_secret: secret,
-      p_name: name.trim(),
+      p_name: contributorName,
       p_amount: parsedAmount,
       p_type: fireworkType,
       p_other: fireworkType === 'other' ? otherText.trim() : null,
@@ -51,7 +50,6 @@ export function ContributionForm({ secret, onSubmitted, onInvalidSecret }: Props
     }
 
     setSuccess(true)
-    setName('')
     setAmount('')
     setFireworkType('fountain')
     setOtherText('')
@@ -61,17 +59,7 @@ export function ContributionForm({ secret, onSubmitted, onInvalidSecret }: Props
   return (
     <form className="card form" onSubmit={handleSubmit}>
       <h3>Contribute to the show</h3>
-
-      <label>
-        Your name
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Jane Doe"
-          required
-        />
-      </label>
+      <p className="muted">Contributing as {contributorName}</p>
 
       <label>
         Amount (USD)

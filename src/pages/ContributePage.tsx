@@ -36,7 +36,12 @@ function ContributeContent() {
       {session!.event.description && <p className="muted">{session!.event.description}</p>}
 
       <div className="columns">
-        <ContributionForm secret={secret} onSubmitted={loadContributions} onInvalidSecret={lock} />
+        <ContributionForm
+          secret={secret}
+          contributorName={session!.name}
+          onSubmitted={loadContributions}
+          onInvalidSecret={lock}
+        />
 
         <div className="card">
           <h3>

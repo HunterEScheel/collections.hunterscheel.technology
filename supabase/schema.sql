@@ -45,7 +45,7 @@ create table purchases (
   event_id uuid not null references events(id) on delete cascade,
   item_name text not null,
   firework_type firework_type,
-  cost numeric(10,2) not null check (cost >= 0),
+  cost numeric(10,2) not null check (cost >= 0), -- per unit; line total = cost * quantity
   quantity int not null default 1 check (quantity > 0),
   notes text,
   created_at timestamptz not null default now()

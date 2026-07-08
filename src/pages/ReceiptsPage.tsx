@@ -31,7 +31,8 @@ function ReceiptsContent() {
     })
   }, [secret, lock])
 
-  const spent = purchases.reduce((sum, p) => sum + Number(p.cost), 0)
+  // cost is per unit; line total = cost * quantity
+  const spent = purchases.reduce((sum, p) => sum + Number(p.cost) * p.quantity, 0)
 
   return (
     <div className="page">
@@ -62,7 +63,8 @@ function ReceiptsContent() {
                   <th>Item</th>
                   <th>Type</th>
                   <th>Qty</th>
-                  <th>Cost</th>
+                  <th>Cost per unit</th>
+                  <th>Total</th>
                   <th>Notes</th>
                 </tr>
               </thead>
@@ -73,6 +75,7 @@ function ReceiptsContent() {
                     <td>{p.firework_type ? fireworkLabel(p.firework_type) : '—'}</td>
                     <td>{p.quantity}</td>
                     <td>{formatMoney(Number(p.cost))}</td>
+                    <td>{formatMoney(Number(p.cost) * p.quantity)}</td>
                     <td className="muted">{p.notes ?? ''}</td>
                   </tr>
                 ))}

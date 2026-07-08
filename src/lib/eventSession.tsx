@@ -6,11 +6,12 @@ import type { PublicEvent } from './types'
 interface EventSession {
   event: PublicEvent
   secret: string
+  name: string
 }
 
 interface EventSessionContextValue {
   session: EventSession | null
-  unlock: (secret: string) => Promise<string | null> // returns error message or null
+  unlock: (secret: string, name: string) => Promise<string | null> // returns error message or null
   lock: () => void
 }
 
@@ -21,7 +22,11 @@ const STORAGE_KEY = 'ff-event-session'
 function readStored(): EventSession | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as EventSession) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as EventSession
+    // Discard sessions stored by older versions without a name.
+    if (!parsed.event || !parsed.secret || !parsed.name) return null
+    return parsed
   } catch {
     return null
   }
@@ -30,12 +35,12 @@ function readStored(): EventSession | null {
 export function EventSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<EventSession | null>(readStored)
 
-  const unlock = useCallback(async (secret: string): Promise<string | null> => {
+  const unlock = useCallback(async (secret: string, name: string): Promise<string | null> => {
     const { data, error } = await supabase.rpc('get_event_by_secret', { p_secret: secret })
     if (error) return `Something went wrong: ${error.message}`
     const rows = (data ?? []) as PublicEvent[]
     if (rows.length === 0) return 'Wrong passcode — check with the event organizer.'
-    const next = { event: rows[0], secret }
+    const next = { event: rows[0], secret, name: name.trim() }
     setSession(next)
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
     return null
