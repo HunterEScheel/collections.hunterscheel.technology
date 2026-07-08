@@ -54,7 +54,7 @@ function ContributeContent() {
               {contributions.map((c) => (
                 <li key={c.id}>
                   <strong>{c.contributor_name}</strong> gave {formatMoney(Number(c.amount))}
-                  <span className="muted"> · wants {fireworkLabel(c.firework_type)}</span>
+                  <span className="muted"> · wants {fireworkLabel(c.firework_type, c.firework_other)}</span>
                 </li>
               ))}
             </ul>

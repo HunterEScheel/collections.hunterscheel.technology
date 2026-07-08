@@ -6,8 +6,7 @@
 -- Enum
 -- ============================================================
 create type firework_type as enum (
-  'fountain', 'willow', 'chrysanthemum', 'brocade', 'candle',
-  'comet', 'parachutes', 'fish', 'buyers_choice'
+  'mortars', 'comets', 'parachutes', 'fountain', 'other', 'buyers_choice'
 );
 
 -- ============================================================
@@ -31,7 +30,13 @@ create table contributions (
   contributor_name text not null,
   amount numeric(10,2) not null check (amount > 0),
   firework_type firework_type not null,
-  created_at timestamptz not null default now()
+  firework_other text,
+  created_at timestamptz not null default now(),
+  -- "other" requires a description; named types must not have one
+  constraint firework_other_required check (
+    (firework_type = 'other' and firework_other is not null and length(trim(firework_other)) > 0)
+    or (firework_type <> 'other' and firework_other is null)
+  )
 );
 
 create table purchases (
@@ -146,7 +151,8 @@ create or replace function submit_contribution(
   p_secret text,
   p_name text,
   p_amount numeric,
-  p_type firework_type
+  p_type firework_type,
+  p_other text default null
 ) returns uuid
 language plpgsql
 security definer
@@ -155,8 +161,14 @@ as $$
 declare
   v_id uuid;
 begin
-  insert into contributions (event_id, contributor_name, amount, firework_type)
-  values (_event_id_for_secret(p_secret), trim(p_name), p_amount, p_type)
+  insert into contributions (event_id, contributor_name, amount, firework_type, firework_other)
+  values (
+    _event_id_for_secret(p_secret),
+    trim(p_name),
+    p_amount,
+    p_type,
+    nullif(trim(coalesce(p_other, '')), '')
+  )
   returning id into v_id;
 
   return v_id;
