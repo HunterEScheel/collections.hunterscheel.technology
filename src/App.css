@@ -183,6 +183,24 @@ th {
   font-weight: 500;
 }
 
+.firework-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.firework-preview svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.firework-preview p {
+  font-size: 13px;
+}
+
 .row-del {
   background: transparent;
   color: var(--error);

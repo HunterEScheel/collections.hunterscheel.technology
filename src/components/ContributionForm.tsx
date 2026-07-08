@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { FIREWORK_TYPES, fireworkLabel } from '../lib/types'
 import type { FireworkType } from '../lib/types'
+import { FireworkPreview } from './FireworkPreview'
 
 interface Props {
   secret: string
@@ -87,6 +88,8 @@ export function ContributionForm({ secret, contributorName, onSubmitted, onInval
           ))}
         </select>
       </label>
+
+      <FireworkPreview type={fireworkType} />
 
       {fireworkType === 'other' && (
         <label>
