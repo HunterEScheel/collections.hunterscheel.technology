@@ -2,7 +2,7 @@ import type { FireworkType } from '../lib/types'
 
 const DESCRIPTIONS: Record<FireworkType, string> = {
   mortars: 'Aerial shells that burst high into big spheres of stars and trails.',
-  comets: 'Bright heads streaking skyward with long sparkling tails.',
+  comets: 'Comets, tails, and pearls — shots that streak skyward and never burst.',
   parachutes: 'A shell that deploys glowing parachutes drifting slowly down.',
   fountain: 'Ground effect spraying a steady shower of sparks upward.',
   other: 'Something else — tell us what you have in mind!',

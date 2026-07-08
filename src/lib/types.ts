@@ -47,6 +47,7 @@ export interface Purchase {
 export function fireworkLabel(type: FireworkType, other?: string | null): string {
   if (type === 'buyers_choice') return "Buyer's choice"
   if (type === 'other') return other ? `Other: ${other}` : 'Other'
+  if (type === 'comets') return 'Risers' // umbrella for comets, tails, and pearls
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
