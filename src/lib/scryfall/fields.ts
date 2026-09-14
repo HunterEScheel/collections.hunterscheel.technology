@@ -312,12 +312,26 @@ const zoneField = (op: Op, value: string): Predicate => {
 // name index is built lazily and cached until the pool changes.
 let searchPool: OwnedCard[] = [];
 let poolIndex: Map<string, Set<string>> | null = null;
+let poolCopies: Map<string, number> | null = null;
 
 export function setSearchPool(cards: OwnedCard[]): void {
   if (cards !== searchPool) {
     searchPool = cards;
     poolIndex = null;
+    poolCopies = null;
   }
+}
+
+/** Total copies owned per card name (lowercased), across every location. */
+function getPoolCopies(): Map<string, number> {
+  if (!poolCopies) {
+    poolCopies = new Map();
+    for (const c of searchPool) {
+      const key = (c.scryfall?.name ?? c.card_name).toLowerCase();
+      poolCopies.set(key, (poolCopies.get(key) ?? 0) + c.quantity);
+    }
+  }
+  return poolCopies;
 }
 
 function getPoolIndex(): Map<string, Set<string>> {
@@ -405,6 +419,10 @@ const REGISTRY: Record<string, FieldBuilder> = {
   language: langField,
   qty: numericField((c) => c.quantity),
   quantity: numericField((c) => c.quantity),
+  // Total copies of this card name across the whole collection (all
+  // locations and printings) — `copies>=2` finds duplicates.
+  copies: numericField((c) =>
+    getPoolCopies().get((c.scryfall?.name ?? c.card_name).toLowerCase()) ?? null),
   loc: textContainsField((c) => c.location_name),
   location: textContainsField((c) => c.location_name),
   binder: textContainsField((c) => c.binder_name),

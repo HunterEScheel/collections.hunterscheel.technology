@@ -41,6 +41,9 @@ function Main({ user }: { user: User }) {
   const [deckMode, setDeckMode] = useState(false);
   const [deck, setDeck] = useState<Map<number, number>>(new Map());
   const [deckCopied, setDeckCopied] = useState(false);
+  const [deckDestId, setDeckDestId] = useState('');
+  const [deckBusy, setDeckBusy] = useState(false);
+  const [deckError, setDeckError] = useState<string | null>(null);
   const [remote, setRemote] = useState<RemoteSearchResult | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [remoteError, setRemoteError] = useState<string | null>(null);
@@ -149,6 +152,47 @@ function Main({ user }: { user: User }) {
   function onCardClick(c: OwnedCard) {
     if (deckMode) setDeckQty(c.id, (deck.get(c.id) ?? 0) + 1);
     else setDetail(c);
+  }
+
+  /**
+   * Move the deckbuilder's picked quantities to a location. Each entry keys a
+   * grouped display row, so consume its underlying variant rows in order
+   * until the picked count is covered.
+   */
+  async function moveDeck(destId: string) {
+    setDeckBusy(true);
+    setDeckError(null);
+    try {
+      const transfers: { sourceRow: OwnedCard; qty: number }[] = [];
+      for (const [id, qty] of deck) {
+        const rep = displayById.get(id) ?? cards.find((r) => r.id === id);
+        if (!rep) continue;
+        if (locations.some((l) => l.id === rep.collection_id && l.user_id !== user.id)) {
+          throw new Error(`"${rep.scryfall?.name ?? rep.card_name}" is in a reservation that has not been transferred yet — remove it from the list first.`);
+        }
+        const rows = cards.filter((r) =>
+          r.collection_id === rep.collection_id
+          && r.scryfall_id === rep.scryfall_id
+          && r.language === rep.language
+          && r.binder_name === rep.binder_name);
+        let need = qty;
+        for (const row of rows) {
+          if (need <= 0) break;
+          const take = Math.min(row.quantity, need);
+          transfers.push({ sourceRow: row, qty: take });
+          need -= take;
+        }
+      }
+      if (transfers.length === 0) return;
+      const destCards = cards.filter((r) => r.collection_id === destId);
+      await executeMove(computeWrites(transfers, destCards, destId));
+      setDeck(new Map());
+      reload();
+    } catch (e) {
+      setDeckError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeckBusy(false);
+    }
   }
 
   /**
@@ -349,6 +393,11 @@ function Main({ user }: { user: User }) {
                     <span className="min-w-0 flex-1 truncate">
                       {c.scryfall?.name ?? c.card_name}
                       <span className="text-zinc-500"> ({c.set_code?.toUpperCase()})</span>
+                      {c.location_name && (
+                        <span className="ml-2 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400 ring-1 ring-zinc-700">
+                          {c.location_name}
+                        </span>
+                      )}
                     </span>
                     <button
                       onClick={() => setDeckQty(id, qty - 1)}
@@ -405,8 +454,27 @@ function Main({ user }: { user: User }) {
               >
                 clear
               </button>
+              <span className="ml-2 text-xs text-zinc-500">move to</span>
+              <select
+                value={deckDestId}
+                onChange={(e) => setDeckDestId(e.target.value)}
+                className="rounded bg-zinc-800 px-2 py-1 text-xs ring-1 ring-zinc-600"
+              >
+                <option value="">— pick a location —</option>
+                {locations
+                  .filter((l) => l.user_id === user.id)
+                  .map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+              <button
+                onClick={() => moveDeck(deckDestId)}
+                disabled={deckBusy || !deckDestId}
+                className="text-xs text-indigo-400 underline hover:text-indigo-300 disabled:opacity-40"
+              >
+                {deckBusy ? 'moving…' : `move ${deckCount} cop${deckCount === 1 ? 'y' : 'ies'}`}
+              </button>
             </div>
           )}
+          {deckError && <p className="text-sm text-red-400">{deckError}</p>}
         </div>
       )}
 

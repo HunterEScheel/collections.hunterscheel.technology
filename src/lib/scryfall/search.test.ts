@@ -262,6 +262,18 @@ describe('search', () => {
     expect(search('-in:all', extra)).toHaveLength(0);
   });
 
+  it('copies: sums a name across locations and printings', () => {
+    const extra = [
+      ...FIXTURE, // Lightning Bolt qty 4 in Main
+      card({ name: 'Lightning Bolt', location_name: 'Storage', set_code: 'm11', quantity: 2 }),
+    ];
+    // 4 + 2 copies across two printings/locations.
+    expect(names(search('copies>=6', extra))).toEqual(['Lightning Bolt', 'Lightning Bolt']);
+    expect(names(search('copies>=6 loc:storage', extra))).toEqual(['Lightning Bolt']);
+    // Singletons excluded.
+    expect(names(search('copies>=2', extra))).not.toContain('Tarmogoyf');
+  });
+
   it('malformed queries throw QueryError', () => {
     expect(() => search('t:creature (c:r', FIXTURE)).toThrow(QueryError);
     expect(() => search('o:"unclosed', FIXTURE)).toThrow(QueryError);

@@ -46,7 +46,8 @@ const GROUPS: Group[] = [
   {
     title: 'Your collection',
     entries: [
-      { term: 'qty: / quantity:', desc: 'Copies owned (qty>=2)' },
+      { term: 'qty: / quantity:', desc: 'Copies in this row (qty>=2)' },
+      { term: 'copies:', desc: 'Total copies of the name across ALL locations/printings — copies>=2 finds duplicates' },
       { term: 'loc: / location:', desc: 'Location name contains text' },
       { term: 'binder:', desc: 'Binder name from ManaBox/Dragon Shield imports' },
       { term: 'in:', desc: 'Card also exists (by name) in that location (loc:deck in:bulk); -in: negates' },
