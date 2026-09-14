@@ -322,17 +322,35 @@ export function setSearchPool(cards: OwnedCard[]): void {
   }
 }
 
-/** Total copies owned per card name (lowercased), across every location. */
+// `copies:` is scoped to the CURRENT RESULT SET, not the whole collection:
+// the search runs twice — pass 1 with copies as a no-op to find the other
+// terms' results, pass 2 counting copies within them. The entry points drive
+// this via the two setters below. `in:` always stays whole-collection.
+let copiesPassthrough = false;
+let copiesScope: OwnedCard[] | null = null;
+
+export function setCopiesPassthrough(on: boolean): void {
+  copiesPassthrough = on;
+}
+
+export function setCopiesScope(cards: OwnedCard[] | null): void {
+  copiesScope = cards;
+  poolCopies = null;
+}
+
 function getPoolCopies(): Map<string, number> {
   if (!poolCopies) {
     poolCopies = new Map();
-    for (const c of searchPool) {
+    for (const c of copiesScope ?? searchPool) {
       const key = (c.scryfall?.name ?? c.card_name).toLowerCase();
       poolCopies.set(key, (poolCopies.get(key) ?? 0) + c.quantity);
     }
   }
   return poolCopies;
 }
+
+/** Whether a query uses the result-scoped `copies:` field. */
+export const usesCopies = (query: string): boolean => /(^|[\s(-])copies\s*[:=<>!]/i.test(query);
 
 function getPoolIndex(): Map<string, Set<string>> {
   if (!poolIndex) {
@@ -419,10 +437,13 @@ const REGISTRY: Record<string, FieldBuilder> = {
   language: langField,
   qty: numericField((c) => c.quantity),
   quantity: numericField((c) => c.quantity),
-  // Total copies of this card name across the whole collection (all
+  // Total copies of this card name within the current results (all matching
   // locations and printings) — `copies>=2` finds duplicates.
-  copies: numericField((c) =>
-    getPoolCopies().get((c.scryfall?.name ?? c.card_name).toLowerCase()) ?? null),
+  copies: (op, value) => {
+    const pred = numericField((c) =>
+      getPoolCopies().get((c.scryfall?.name ?? c.card_name).toLowerCase()) ?? null)(op, value);
+    return (c) => copiesPassthrough || pred(c);
+  },
   loc: textContainsField((c) => c.location_name),
   location: textContainsField((c) => c.location_name),
   binder: textContainsField((c) => c.binder_name),

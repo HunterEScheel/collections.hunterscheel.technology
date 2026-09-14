@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { OwnedCard } from '../types';
-import { compileQuery, QueryError, setSearchPool } from '../lib/scryfall';
+import {
+  compileQuery, QueryError, setCopiesPassthrough, setCopiesScope, setSearchPool, usesCopies,
+} from '../lib/scryfall';
 
 export interface UiFilters {
   minQty: number | null;
@@ -20,8 +22,12 @@ export function useSearch(cards: OwnedCard[], query: string, filters: UiFilters)
   }, [query]);
 
   return useMemo(() => {
-    // in:/notin: fields look up card names across the whole pool.
+    // in: fields look up card names across the whole pool.
     setSearchPool(cards);
+    // copies: counts within the current results, so it runs in a second pass
+    // after every other term and UI filter has narrowed the set.
+    const twoPass = usesCopies(debounced);
+    setCopiesPassthrough(twoPass);
     let pred: (c: OwnedCard) => boolean;
     try {
       pred = compileQuery(debounced);
@@ -33,13 +39,19 @@ export function useSearch(cards: OwnedCard[], query: string, filters: UiFilters)
     }
 
     const locationSet = new Set(filters.locations);
-    const results = cards.filter((c) => {
+    let results = cards.filter((c) => {
       if (!pred(c)) return false;
       if (filters.minQty !== null && c.quantity < filters.minQty) return false;
       if (filters.maxQty !== null && c.quantity > filters.maxQty) return false;
       if (locationSet.size > 0 && !locationSet.has(c.location_name)) return false;
       return true;
     });
+    if (twoPass) {
+      setCopiesPassthrough(false);
+      setCopiesScope(results);
+      results = results.filter(pred);
+      setCopiesScope(null);
+    }
     return { results, error: null as string | null };
   }, [cards, debounced, filters]);
 }

@@ -262,14 +262,22 @@ describe('search', () => {
     expect(search('-in:all', extra)).toHaveLength(0);
   });
 
-  it('copies: sums a name across locations and printings', () => {
+  it('copies: sums a name within the current results', () => {
     const extra = [
-      ...FIXTURE, // Lightning Bolt qty 4 in Main
+      ...FIXTURE, // Lightning Bolt qty 4 in Main (an instant)
       card({ name: 'Lightning Bolt', location_name: 'Storage', set_code: 'm11', quantity: 2 }),
     ];
-    // 4 + 2 copies across two printings/locations.
+    // No other terms: counts span everything (4 + 2 across two printings).
     expect(names(search('copies>=6', extra))).toEqual(['Lightning Bolt', 'Lightning Bolt']);
-    expect(names(search('copies>=6 loc:storage', extra))).toEqual(['Lightning Bolt']);
+    // Scoped to the other terms' results: both printings are instants...
+    expect(names(search('t:instant copies>=6', extra))).toEqual([
+      'Lightning Bolt', 'Lightning Bolt',
+    ]);
+    // ...but only 2 copies live in Storage, so within that scope it's not a dupe.
+    expect(search('loc:storage copies>=6', extra)).toHaveLength(0);
+    expect(names(search('loc:storage copies>=2', extra))).toEqual([
+      'Command Tower', 'Lightning Bolt',
+    ]);
     // Singletons excluded.
     expect(names(search('copies>=2', extra))).not.toContain('Tarmogoyf');
   });
