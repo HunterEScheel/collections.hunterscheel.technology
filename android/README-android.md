@@ -35,7 +35,9 @@ login covers both — and your kitchen follows you to another device.
   filter by category or "needs restock"; sort by name, category, soonest expiry, or
   recently updated.
 - **Starter pantry.** An empty kitchen offers ~30 common staples you can seed and
-  then edit, so you're not typing "salt" into a blank screen.
+  then edit, so you're not typing "salt" into a blank screen. They are measured the way
+  you would actually check them: dry goods weighed in grams, canned and liquid in
+  ounces — counting jars tells you nothing about how much is left in one.
 - **Undo.** Deleting an item offers an undo snackbar.
 
 ## Categories
