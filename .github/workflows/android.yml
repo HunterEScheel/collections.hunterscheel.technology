@@ -16,7 +16,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # The runner image already ships the SDK; the default package set this
+      # action installs includes the retired "tools" package, which 404s.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ""
 
       - uses: gradle/actions/setup-gradle@v4
 
