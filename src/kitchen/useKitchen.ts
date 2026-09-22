@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { KitchenItem, KitchenRecipe } from './types';
 import { effectiveStep } from './pantry';
+import { starterPantry } from './staples';
 
 /**
  * The whole kitchen, fetched once and worked on in the browser.
@@ -134,6 +135,26 @@ export function useKitchen(user: User) {
     }
   }, []);
 
+  /** Fills an empty kitchen with common staples. Refuses if anything is there. */
+  const seedStaples = useCallback(async () => {
+    const { count, error: countError } = await supabase
+      .from('kitchen_items')
+      .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null);
+    if (countError) throw new Error(countError.message);
+    if (count && count > 0) return 0;
+
+    const rows = starterPantry().map((staple) => ({
+      ...staple,
+      id: crypto.randomUUID(),
+      user_id: user.id,
+    }));
+    const { error } = await supabase.from('kitchen_items').insert(rows);
+    if (error) throw new Error(error.message);
+    await load();
+    return rows.length;
+  }, [user.id, load]);
+
   const deleteRecipe = useCallback(async (recipe: KitchenRecipe) => {
     const { error } = await supabase
       .from('kitchen_recipes')
@@ -155,6 +176,7 @@ export function useKitchen(user: User) {
     saveRecipe,
     setPlanned,
     deleteRecipe,
+    seedStaples,
   };
 }
 

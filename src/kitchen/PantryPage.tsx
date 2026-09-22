@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AndroidDownload } from './AndroidDownload';
 import type { Kitchen } from './useKitchen';
 import {
   applyFilters,
@@ -23,7 +22,7 @@ const SORTS: { value: KitchenSort; label: string }[] = [
 ];
 
 export function PantryPage({ kitchen }: { kitchen: Kitchen }) {
-  const { items, loading, adjust, reload } = kitchen;
+  const { items, loading, adjust, reload, seedStaples } = kitchen;
   const [filters, setFilters] = useState(EMPTY_KITCHEN_FILTERS);
   const navigate = useNavigate();
 
@@ -87,7 +86,7 @@ export function PantryPage({ kitchen }: { kitchen: Kitchen }) {
       {loading ? (
         <p className="text-zinc-400">Loading…</p>
       ) : items.length === 0 ? (
-        <EmptyKitchen />
+        <EmptyKitchen onSeed={seedStaples} onAdd={() => navigate('/kitchen/item/new')} />
       ) : visible.length === 0 ? (
         <p className="text-zinc-400">Nothing matches that.</p>
       ) : (
@@ -98,7 +97,6 @@ export function PantryPage({ kitchen }: { kitchen: Kitchen }) {
         </ul>
       )}
 
-      <AndroidDownload />
     </div>
   );
 }
@@ -177,14 +175,44 @@ function StepButton({
   );
 }
 
-function EmptyKitchen() {
+function EmptyKitchen({
+  onSeed,
+  onAdd,
+}: {
+  onSeed: () => Promise<number>;
+  onAdd: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function seed() {
+    setBusy(true);
+    setError(null);
+    try {
+      await onSeed();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'That did not work');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="rounded-lg bg-zinc-900 p-6 text-sm text-zinc-400 ring-1 ring-zinc-800">
-      <p className="mb-2 font-medium text-zinc-200">Nothing here yet</p>
+    <div className="space-y-3 rounded-lg bg-zinc-900 p-6 text-sm text-zinc-400 ring-1 ring-zinc-800">
+      <p className="font-medium text-zinc-200">Nothing in the kitchen yet</p>
       <p>
-        Add your first item, or sign in to the Android app with this same account and press
-        Sync to bring an existing kitchen across.
+        Add your first item, or start from a list of about thirty common staples you can
+        then edit — flour, rice, the spice drawer, oil, a few tins.
       </p>
+      <div className="flex items-center gap-2">
+        <button onClick={() => void seed()} disabled={busy} className={primaryButtonClass}>
+          {busy ? 'Filling the shelves…' : 'Start with staples'}
+        </button>
+        <button onClick={onAdd} className={subtleButtonClass}>
+          Add an item
+        </button>
+      </div>
+      {error && <p className="text-red-400">{error}</p>}
     </div>
   );
 }

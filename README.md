@@ -19,11 +19,10 @@ Sign in at the root and pick a category:
 └─ supabase/      migrations for both — card tables, and kitchen_* for the pantry
 ```
 
-The kitchen has the same three places on the web as on the phone — pantry, recipes,
-shopping list — reading and writing the same synced rows. Use whichever is to hand: the
-phone works with no signal at the shelf, the website is easier to type into. The Android
-app is downloadable from `/kitchen`; CI publishes the APK to a fixed release tag on every
-push to `main`, so the link never goes stale.
+The kitchen lives on the web: pantry, recipes and the shopping list, including a
+starter set of staples for a new kitchen. The Android app in `android/` reads and
+writes the same synced rows and still builds, but it is no longer published or offered
+for download — the website is the way in.
 
 Deletes on the web are soft (`deleted_at`), which is how a deletion reaches the phone —
 a hard delete would simply vanish from its next pull and the item would live on in a
