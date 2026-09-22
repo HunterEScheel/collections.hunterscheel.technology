@@ -36,20 +36,8 @@ data class PantryUiState(
     val usedCategories: List<Category>
         get() = allItems.map { it.category }.distinct().sortedBy { it.ordinal }
 
-    val restockItems: List<PantryItem>
-        get() = allItems.filter { it.status.needsRestock }
-            .sortedWith(compareBy({ it.category.ordinal }, { it.name.lowercase() }))
-
-    val expiringItems: List<PantryItem>
-        get() = allItems.filter { it.isExpired() || it.expiresWithin(EXPIRY_HORIZON_DAYS) }
-            .sortedBy { it.expiresOn ?: Long.MAX_VALUE }
-
     val outCount: Int get() = allItems.count { it.status == StockStatus.OUT }
     val lowCount: Int get() = allItems.count { it.status == StockStatus.LOW }
-
-    companion object {
-        const val EXPIRY_HORIZON_DAYS = 14L
-    }
 }
 
 class PantryViewModel(private val repository: PantryRepository) : ViewModel() {

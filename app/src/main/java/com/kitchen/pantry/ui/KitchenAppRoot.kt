@@ -2,6 +2,7 @@ package com.kitchen.pantry.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Kitchen
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -20,46 +21,86 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kitchen.pantry.ui.screens.ItemEditScreen
 import com.kitchen.pantry.ui.screens.PantryListScreen
+import com.kitchen.pantry.ui.screens.RecipeDetailScreen
+import com.kitchen.pantry.ui.screens.RecipeEditScreen
+import com.kitchen.pantry.ui.screens.RecipeListScreen
 import com.kitchen.pantry.ui.screens.ShoppingListScreen
 
 private object Routes {
     const val PANTRY = "pantry"
+    const val RECIPES = "recipes"
     const val SHOPPING = "shopping"
-    const val EDIT = "edit/{itemId}"
+    const val EDIT_ITEM = "edit/{itemId}"
+    const val RECIPE_DETAIL = "recipe/{recipeId}"
+    const val EDIT_RECIPE = "recipe/{recipeId}/edit"
 
-    fun edit(itemId: Long) = "edit/$itemId"
+    fun editItem(itemId: Long) = "edit/$itemId"
+    fun recipeDetail(recipeId: Long) = "recipe/$recipeId"
+    fun editRecipe(recipeId: Long) = "recipe/$recipeId/edit"
 }
 
 @Composable
 fun KitchenAppRoot() {
     val navController = rememberNavController()
-    // One view model for both list screens, scoped to the activity: the pantry is
-    // the same data whichever tab you are on.
+    // Activity-scoped: the pantry and the recipe book are the same data whichever
+    // tab you are looking at.
     val pantryViewModel: PantryViewModel = viewModel(factory = PantryViewModel.Factory)
+    val recipesViewModel: RecipesViewModel = viewModel(factory = RecipesViewModel.Factory)
+    val shoppingViewModel: ShoppingViewModel = viewModel(factory = ShoppingViewModel.Factory)
 
     NavHost(navController = navController, startDestination = Routes.PANTRY) {
         composable(Routes.PANTRY) {
             PantryListScreen(
                 viewModel = pantryViewModel,
-                onAddItem = { navController.navigate(Routes.edit(0)) },
-                onOpenItem = { id -> navController.navigate(Routes.edit(id)) },
+                onAddItem = { navController.navigate(Routes.editItem(0)) },
+                onOpenItem = { id -> navController.navigate(Routes.editItem(id)) },
+                bottomBar = { KitchenBottomBar(navController) },
+            )
+        }
+        composable(Routes.RECIPES) {
+            RecipeListScreen(
+                viewModel = recipesViewModel,
+                onAddRecipe = { navController.navigate(Routes.editRecipe(0)) },
+                onOpenRecipe = { id -> navController.navigate(Routes.recipeDetail(id)) },
                 bottomBar = { KitchenBottomBar(navController) },
             )
         }
         composable(Routes.SHOPPING) {
             ShoppingListScreen(
-                viewModel = pantryViewModel,
-                onOpenItem = { id -> navController.navigate(Routes.edit(id)) },
+                viewModel = shoppingViewModel,
+                onOpenItem = { id -> navController.navigate(Routes.editItem(id)) },
                 bottomBar = { KitchenBottomBar(navController) },
             )
         }
         composable(
-            route = Routes.EDIT,
+            route = Routes.EDIT_ITEM,
             arguments = listOf(navArgument("itemId") { type = NavType.LongType }),
         ) { entry ->
             val itemId = entry.arguments?.getLong("itemId") ?: 0L
             ItemEditScreen(
                 viewModel = viewModel(factory = ItemEditViewModel.factory(itemId)),
+                onDone = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = Routes.RECIPE_DETAIL,
+            arguments = listOf(navArgument("recipeId") { type = NavType.LongType }),
+        ) { entry ->
+            val recipeId = entry.arguments?.getLong("recipeId") ?: 0L
+            RecipeDetailScreen(
+                viewModel = recipesViewModel,
+                recipeId = recipeId,
+                onBack = { navController.popBackStack() },
+                onEdit = { id -> navController.navigate(Routes.editRecipe(id)) },
+            )
+        }
+        composable(
+            route = Routes.EDIT_RECIPE,
+            arguments = listOf(navArgument("recipeId") { type = NavType.LongType }),
+        ) { entry ->
+            val recipeId = entry.arguments?.getLong("recipeId") ?: 0L
+            RecipeEditScreen(
+                viewModel = viewModel(factory = RecipeEditViewModel.factory(recipeId)),
                 onDone = { navController.popBackStack() },
             )
         }
@@ -77,6 +118,12 @@ private fun KitchenBottomBar(navController: NavHostController) {
             onClick = { navController.switchTab(Routes.PANTRY) },
             icon = { Icon(Icons.Filled.Kitchen, contentDescription = null) },
             label = { Text("Pantry") },
+        )
+        NavigationBarItem(
+            selected = current == Routes.RECIPES,
+            onClick = { navController.switchTab(Routes.RECIPES) },
+            icon = { Icon(Icons.Filled.MenuBook, contentDescription = null) },
+            label = { Text("Recipes") },
         )
         NavigationBarItem(
             selected = current == Routes.SHOPPING,

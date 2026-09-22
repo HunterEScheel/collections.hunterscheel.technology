@@ -24,10 +24,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -36,26 +36,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.kitchen.pantry.data.PantryItem
-import com.kitchen.pantry.ui.PantryViewModel
+import com.kitchen.pantry.data.RecipeNeed
+import com.kitchen.pantry.ui.ShoppingUiState
+import com.kitchen.pantry.ui.ShoppingViewModel
 import java.time.format.DateTimeFormatter
 
 private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM")
 
 /**
- * What to buy, derived from stock levels — plus a "use this up" section so food
- * about to expire gets cooked instead of thrown out.
+ * What to buy: items the pantry is low on, everything the planned recipes need and
+ * the kitchen can't cover, and a nudge about food that is about to go off.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListScreen(
-    viewModel: PantryViewModel,
+    viewModel: ShoppingViewModel,
     onOpenItem: (Long) -> Unit,
     bottomBar: @Composable () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     // Ticked boxes are a shopping-trip scratchpad, not stored state.
-    val ticked = rememberSaveable(saver = TickedSaver) { mutableStateOf(emptySet<Long>()) }
+    val tickedItems = rememberSaveable(saver = TickedSaver) { mutableStateOf(emptySet<Long>()) }
+    val tickedNeeds = rememberSaveable(saver = TextTickedSaver) { mutableStateOf(emptySet<String>()) }
 
     Scaffold(
         topBar = {
@@ -64,7 +67,7 @@ fun ShoppingListScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            val text = shareText(state.restockItems)
+                            val text = shareText(state)
                             if (text.isNotBlank()) {
                                 val send = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
@@ -82,17 +85,15 @@ fun ShoppingListScreen(
         },
         bottomBar = bottomBar,
     ) { padding ->
-        val restock = state.restockItems
-        val expiring = state.expiringItems
-
-        if (restock.isEmpty() && expiring.isEmpty()) {
+        if (state.isEmpty) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (state.isEmptyPantry) {
-                        "Add items to your pantry and this list fills itself."
+                    text = if (state.pantryEmpty) {
+                        "Add items to your pantry, or put a recipe on the plan, " +
+                            "and this list fills itself."
                     } else {
                         "Nothing to buy. The kitchen is stocked."
                     },
@@ -108,17 +109,47 @@ fun ShoppingListScreen(
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (restock.isNotEmpty()) {
-                item { SectionHeader("Buy (${restock.size})") }
-                items(restock, key = { "buy-${it.id}" }) { pantryItem ->
+            if (state.recipeNeeds.isNotEmpty()) {
+                item {
+                    SectionHeader("For your recipes (${state.recipeNeeds.size})")
+                    Text(
+                        text = "From ${state.plannedRecipeNames.joinToString(", ")}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                items(state.recipeNeeds, key = { "need-${it.name}-${it.unit.name}" }) { need ->
+                    val key = "${need.name}|${need.unit.name}"
+                    NeedRow(
+                        need = need,
+                        checked = key in tickedNeeds.value,
+                        onCheckedChange = { checked ->
+                            tickedNeeds.value = if (checked) {
+                                tickedNeeds.value + key
+                            } else {
+                                tickedNeeds.value - key
+                            }
+                        },
+                    )
+                }
+            }
+
+            if (state.restockItems.isNotEmpty()) {
+                item {
+                    if (state.recipeNeeds.isNotEmpty()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    }
+                    SectionHeader("Running low (${state.restockItems.size})")
+                }
+                items(state.restockItems, key = { "buy-${it.id}" }) { pantryItem ->
                     ShoppingRow(
                         item = pantryItem,
-                        checked = pantryItem.id in ticked.value,
+                        checked = pantryItem.id in tickedItems.value,
                         onCheckedChange = { checked ->
-                            ticked.value = if (checked) {
-                                ticked.value + pantryItem.id
+                            tickedItems.value = if (checked) {
+                                tickedItems.value + pantryItem.id
                             } else {
-                                ticked.value - pantryItem.id
+                                tickedItems.value - pantryItem.id
                             }
                         },
                         onClick = { onOpenItem(pantryItem.id) },
@@ -126,12 +157,12 @@ fun ShoppingListScreen(
                 }
             }
 
-            if (expiring.isNotEmpty()) {
+            if (state.expiringItems.isNotEmpty()) {
                 item {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    SectionHeader("Use soon (${expiring.size})")
+                    SectionHeader("Use soon (${state.expiringItems.size})")
                 }
-                items(expiring, key = { "soon-${it.id}" }) { pantryItem ->
+                items(state.expiringItems, key = { "soon-${it.id}" }) { pantryItem ->
                     ExpiringRow(item = pantryItem, onClick = { onOpenItem(pantryItem.id) })
                 }
             }
@@ -150,16 +181,35 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
+private fun NeedRow(need: RecipeNeed, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "${need.amountLabel} ${need.unit.abbreviation} ${need.name}",
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
+            )
+            Text(
+                text = buildString {
+                    if (need.partial) append("Topping up · ")
+                    append(need.recipes.joinToString(", "))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ShoppingRow(
     item: PantryItem,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -200,12 +250,22 @@ private fun ExpiringRow(item: PantryItem, onClick: () -> Unit) {
     }
 }
 
-private fun shareText(items: List<PantryItem>): String = items.joinToString("\n") { item ->
-    "- ${item.name} (${item.category.label})"
-}
+private fun shareText(state: ShoppingUiState): String = buildString {
+    state.recipeNeeds.forEach { need ->
+        appendLine("- ${need.amountLabel} ${need.unit.abbreviation} ${need.name}")
+    }
+    state.restockItems.forEach { item ->
+        appendLine("- ${item.name} (${item.category.label})")
+    }
+}.trim()
 
 /** Ticks survive rotation but not the trip home; a LongArray is bundle-friendly. */
 private val TickedSaver = Saver<MutableState<Set<Long>>, LongArray>(
     save = { it.value.toLongArray() },
+    restore = { mutableStateOf(it.toSet()) },
+)
+
+private val TextTickedSaver = Saver<MutableState<Set<String>>, ArrayList<String>>(
+    save = { ArrayList(it.value) },
     restore = { mutableStateOf(it.toSet()) },
 )

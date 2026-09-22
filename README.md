@@ -16,7 +16,15 @@ Everything is stored on the device. No account, no network permission, no sync.
   blank and the item keeps following its unit.
 - **Restock tracking.** Each item has a "restock at" level. Anything at or below it is
   flagged **LOW**; anything at zero is flagged **OUT**.
-- **Shopping list.** Built automatically from those flags, grouped by category, with
+- **Recipe book.** Recipes with ingredients and servings. Each ingredient is matched
+  against the pantry by name and shown as **have**, **short**, or **need**, with real
+  unit conversion — a recipe asking for 200 g of flour is satisfied by the kilo bag.
+  Units that can't be compared (100 ml of honey against two jars of it) are flagged
+  to check rather than guessed at.
+- **Shop for what you don't have.** Put a recipe "on the plan" and everything it
+  needs that your kitchen can't cover joins the shopping list, deduped and summed
+  across recipes — two recipes each short 100 g of butter make one 200 g line.
+- **Shopping list.** Recipe needs, then items low on stock grouped by category, with
   tick-off checkboxes for the trip and a share button that sends the list to any app.
 - **Use soon.** Items expired or expiring within two weeks, so food gets cooked
   rather than binned.
@@ -52,7 +60,7 @@ minSdk is 26 (Android 8.0), targetSdk 35.
 
 | Layer | What's there |
 | --- | --- |
-| `data/` | Room entity, DAO, database, repository, plus the filter/sort rules |
+| `data/` | Room entities, DAOs, database, repositories, plus the filter/sort and recipe-matching rules |
 | `ui/` | Compose screens, view models, Material 3 theme |
 
 - **UI:** Jetpack Compose + Material 3, with dynamic color on Android 12+.
@@ -65,12 +73,19 @@ minSdk is 26 (Android 8.0), targetSdk 35.
 
 Filtering and sorting live in Kotlin (`PantryFilter.kt`) rather than in SQL: a home
 pantry is a few hundred rows, and the rules stay readable and unit-testable in one place.
+The same goes for recipe matching (`RecipeMatching.kt`) — unit conversion, per-ingredient
+availability and shopping-list aggregation are pure functions over plain data.
+
+Recipe ingredients point at the pantry by **name**, not by a stored id. Renaming a
+pantry item re-points every recipe that mentions it, and deleting one leaves nothing
+dangling.
 
 ### Tests
 
 `app/src/test/` covers the logic worth getting right: stock status at the threshold
-boundary, quantity formatting, expiry arithmetic against a fixed date, and every
-filter/sort combination.
+boundary, quantity formatting, expiry arithmetic against a fixed date, every
+filter/sort combination, unit conversion in both directions, each availability
+verdict, and shopping-list aggregation across recipes.
 
 ```
 ./gradlew test
