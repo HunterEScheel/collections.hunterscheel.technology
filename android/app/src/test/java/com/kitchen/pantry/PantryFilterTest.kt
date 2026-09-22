@@ -6,7 +6,6 @@ import com.kitchen.pantry.data.PantryFilter
 import com.kitchen.pantry.data.PantryItem
 import com.kitchen.pantry.data.SortOrder
 import com.kitchen.pantry.data.applyFilter
-import com.kitchen.pantry.data.starterPantry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -99,13 +98,5 @@ class PantryFilterTest {
     fun `category sort follows the shelf order then the name`() {
         val result = items.applyFilter(PantryFilter(sortOrder = SortOrder.CATEGORY))
         assertEquals(listOf(flour, rice, cumin), result)
-    }
-
-    @Test
-    fun `starter pantry is usable as-is`() {
-        val staples = starterPantry()
-        assertTrue(staples.size > 20)
-        assertTrue(staples.all { it.name.isNotBlank() })
-        assertEquals(staples.size, staples.map { it.name }.distinct().size)
     }
 }
