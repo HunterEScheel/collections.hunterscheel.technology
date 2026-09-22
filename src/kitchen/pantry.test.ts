@@ -19,7 +19,6 @@ function item(overrides: Partial<KitchenItem> = {}): KitchenItem {
     unit: 'KILOGRAMS',
     low_threshold: 0,
     step: 0,
-    location: '',
     expires_on: null,
     notes: '',
     updated_at: '2026-01-01T00:00:00Z',
@@ -92,7 +91,6 @@ describe('filtering', () => {
     quantity: 1,
     unit: 'JARS',
     low_threshold: 1,
-    location: 'Spice drawer',
     updated_at: '2026-01-01T00:00:00Z',
   });
   const flour = item({
@@ -118,11 +116,10 @@ describe('filtering', () => {
     expect(applyFilters(all, EMPTY_KITCHEN_FILTERS).map((i) => i.id)).toEqual(['3', '2', '1']);
   });
 
-  it('searches name, location, notes and category', () => {
+  it('searches name, notes and category', () => {
     const find = (query: string) =>
       applyFilters(all, { ...EMPTY_KITCHEN_FILTERS, query }).map((i) => i.id);
     expect(find('bread')).toEqual(['2']);
-    expect(find('spice drawer')).toEqual(['1']);
     expect(find('risotto')).toEqual(['3']);
     expect(find('Baking')).toEqual(['2']);
     expect(find('  CUMIN ')).toEqual(['1']);

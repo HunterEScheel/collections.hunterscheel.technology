@@ -19,7 +19,6 @@ function pantry(name: string, quantity: number, unit: string): KitchenItem {
     unit,
     low_threshold: 0,
     step: 0,
-    location: '',
     expires_on: null,
     notes: '',
     updated_at: '2026-01-01T00:00:00Z',

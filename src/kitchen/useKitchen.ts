@@ -76,7 +76,6 @@ export function useKitchen(user: User) {
         unit: draft.unit ?? 'PIECES',
         low_threshold: draft.low_threshold ?? 0,
         step: draft.step ?? 0,
-        location: draft.location ?? '',
         expires_on: draft.expires_on ?? null,
         notes: draft.notes ?? '',
       };

@@ -58,7 +58,6 @@ type Draft = {
   unit: string;
   low_threshold: string;
   step: string;
-  location: string;
   expires: string;
   notes: string;
 };
@@ -81,7 +80,6 @@ function ItemForm({
     unit: item?.unit ?? 'PIECES',
     low_threshold: item ? formatQuantity(item.low_threshold) : '0',
     step: item && item.step > 0 ? formatQuantity(item.step) : '',
-    location: item?.location ?? '',
     expires: item?.expires_on !== null && item ? epochDayToInputDate(item.expires_on!) : '',
     notes: item?.notes ?? '',
   });
@@ -123,7 +121,6 @@ function ItemForm({
         unit: draft.unit,
         low_threshold: Number(draft.low_threshold) || 0,
         step: Number(draft.step) > 0 ? Number(draft.step) : 0,
-        location: draft.location.trim(),
         expires_on: inputDateToEpochDay(draft.expires),
         notes: draft.notes.trim(),
       });
@@ -206,15 +203,6 @@ function ItemForm({
           />
         </Field>
       </div>
-
-      <Field label="Where it lives">
-        <input
-          value={draft.location}
-          onChange={(e) => set('location', e.target.value)}
-          placeholder="Spice drawer, chest freezer, …"
-          className={inputClass}
-        />
-      </Field>
 
       <Field label="Best before">
         <input

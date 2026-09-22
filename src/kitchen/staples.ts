@@ -19,47 +19,47 @@ export type StapleSeed = Omit<KitchenItem, 'id' | 'user_id' | 'updated_at' | 'de
 export function starterPantry(): StapleSeed[] {
   return [
     // Baking — dry goods by weight, vanilla is a liquid.
-    dry('All-purpose flour', 'BAKING', 2000, 500, 100, 'Pantry'),
-    dry('Granulated sugar', 'BAKING', 1000, 250, 100, 'Pantry'),
-    dry('Brown sugar', 'BAKING', 500, 200, 50, 'Pantry'),
-    dry('Baking powder', 'BAKING', 200, 50, 10, 'Pantry'),
-    dry('Baking soda', 'BAKING', 450, 100, 25, 'Pantry'),
-    dry('Active dry yeast', 'BAKING', 21, 14, 7, 'Fridge door'),
-    dry('Cocoa powder', 'BAKING', 250, 100, 25, 'Pantry'),
-    wet('Vanilla extract', 'BAKING', 4, 1, 0.5, 'Pantry'),
+    dry('All-purpose flour', 'BAKING', 2000, 500, 100),
+    dry('Granulated sugar', 'BAKING', 1000, 250, 100),
+    dry('Brown sugar', 'BAKING', 500, 200, 50),
+    dry('Baking powder', 'BAKING', 200, 50, 10),
+    dry('Baking soda', 'BAKING', 450, 100, 25),
+    dry('Active dry yeast', 'BAKING', 21, 14, 7),
+    dry('Cocoa powder', 'BAKING', 250, 100, 25),
+    wet('Vanilla extract', 'BAKING', 4, 1, 0.5),
 
     // Grains and pasta.
-    dry('Long-grain rice', 'GRAINS', 2000, 500, 100, 'Pantry'),
-    dry('Rolled oats', 'GRAINS', 1000, 300, 50, 'Pantry'),
-    dry('Spaghetti', 'GRAINS', 1000, 500, 100, 'Pantry'),
-    dry('Quinoa', 'GRAINS', 500, 200, 50, 'Pantry'),
-    dry('Dried lentils', 'GRAINS', 500, 200, 50, 'Pantry'),
+    dry('Long-grain rice', 'GRAINS', 2000, 500, 100),
+    dry('Rolled oats', 'GRAINS', 1000, 300, 50),
+    dry('Spaghetti', 'GRAINS', 1000, 500, 100),
+    dry('Quinoa', 'GRAINS', 500, 200, 50),
+    dry('Dried lentils', 'GRAINS', 500, 200, 50),
 
     // Spices, in the small amounts a jar actually holds.
-    dry('Salt', 'SPICES', 750, 150, 50, 'Spice drawer'),
-    dry('Black peppercorns', 'SPICES', 50, 15, 5, 'Spice drawer'),
-    dry('Ground cumin', 'SPICES', 45, 15, 5, 'Spice drawer'),
-    dry('Smoked paprika', 'SPICES', 45, 15, 5, 'Spice drawer'),
-    dry('Cinnamon', 'SPICES', 45, 15, 5, 'Spice drawer'),
-    dry('Chili flakes', 'SPICES', 40, 10, 5, 'Spice drawer'),
-    dry('Dried oregano', 'SPICES', 25, 10, 5, 'Spice drawer'),
-    dry('Bay leaves', 'SPICES', 10, 5, 2, 'Spice drawer'),
-    dry('Garlic powder', 'SPICES', 60, 15, 5, 'Spice drawer'),
+    dry('Salt', 'SPICES', 750, 150, 50),
+    dry('Black peppercorns', 'SPICES', 50, 15, 5),
+    dry('Ground cumin', 'SPICES', 45, 15, 5),
+    dry('Smoked paprika', 'SPICES', 45, 15, 5),
+    dry('Cinnamon', 'SPICES', 45, 15, 5),
+    dry('Chili flakes', 'SPICES', 40, 10, 5),
+    dry('Dried oregano', 'SPICES', 25, 10, 5),
+    dry('Bay leaves', 'SPICES', 10, 5, 2),
+    dry('Garlic powder', 'SPICES', 60, 15, 5),
 
     // Oils and vinegars.
-    wet('Olive oil', 'OILS', 34, 8, 2, 'Pantry'),
-    wet('Neutral cooking oil', 'OILS', 32, 8, 2, 'Pantry'),
-    wet('White vinegar', 'OILS', 32, 8, 2, 'Pantry'),
+    wet('Olive oil', 'OILS', 34, 8, 2),
+    wet('Neutral cooking oil', 'OILS', 32, 8, 2),
+    wet('White vinegar', 'OILS', 32, 8, 2),
 
     // Canned goods, at the sizes the tins are sold in.
-    wet('Canned tomatoes', 'CANNED', 58, 29, 14.5, 'Pantry'),
-    wet('Chickpeas', 'CANNED', 46.5, 31, 15.5, 'Pantry'),
-    wet('Coconut milk', 'CANNED', 27, 13.5, 13.5, 'Pantry'),
+    wet('Canned tomatoes', 'CANNED', 58, 29, 14.5),
+    wet('Chickpeas', 'CANNED', 46.5, 31, 15.5),
+    wet('Coconut milk', 'CANNED', 27, 13.5, 13.5),
 
     // Sauces and spreads.
-    wet('Soy sauce', 'SAUCES', 15, 5, 1, 'Pantry'),
-    wet('Honey', 'SAUCES', 12, 4, 1, 'Pantry'),
-    wet('Peanut butter', 'SAUCES', 16, 6, 2, 'Pantry'),
+    wet('Soy sauce', 'SAUCES', 15, 5, 1),
+    wet('Honey', 'SAUCES', 12, 4, 1),
+    wet('Peanut butter', 'SAUCES', 16, 6, 2),
   ];
 }
 
@@ -70,9 +70,8 @@ function dry(
   quantity: number,
   lowThreshold: number,
   step: number,
-  location: string,
 ): StapleSeed {
-  return staple(name, category, quantity, 'GRAMS', lowThreshold, step, location);
+  return staple(name, category, quantity, 'GRAMS', lowThreshold, step);
 }
 
 /** Anything canned or liquid: measured in ounces. */
@@ -82,9 +81,8 @@ function wet(
   quantity: number,
   lowThreshold: number,
   step: number,
-  location: string,
 ): StapleSeed {
-  return staple(name, category, quantity, 'OUNCES', lowThreshold, step, location);
+  return staple(name, category, quantity, 'OUNCES', lowThreshold, step);
 }
 
 function staple(
@@ -94,7 +92,6 @@ function staple(
   unit: string,
   low_threshold: number,
   step: number,
-  location: string,
 ): StapleSeed {
   return {
     name,
@@ -103,7 +100,6 @@ function staple(
     unit,
     low_threshold,
     step,
-    location,
     expires_on: null,
     notes: '',
   };

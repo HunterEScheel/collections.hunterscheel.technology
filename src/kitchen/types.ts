@@ -13,7 +13,6 @@ export interface KitchenItem {
   unit: string;
   low_threshold: number;
   step: number;
-  location: string;
   /** Epoch day, or null when it doesn't expire. */
   expires_on: number | null;
   notes: string;

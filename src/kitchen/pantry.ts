@@ -68,7 +68,6 @@ export function applyFilters(items: KitchenItem[], filters: KitchenFilters): Kit
     if (!needle) return true;
     return (
       item.name.toLowerCase().includes(needle) ||
-      item.location.toLowerCase().includes(needle) ||
       item.notes.toLowerCase().includes(needle) ||
       categoryLabel(item.category).toLowerCase().includes(needle)
     );

@@ -121,9 +121,7 @@ function PantryRow({
           {status === 'out' && <Badge tone="bad">OUT</Badge>}
           {status === 'low' && <Badge tone="warn">LOW</Badge>}
         </div>
-        <p className="truncate text-xs text-zinc-500">
-          {[categoryLabel(item.category), item.location].filter(Boolean).join(' · ')}
-        </p>
+        <p className="truncate text-xs text-zinc-500">{categoryLabel(item.category)}</p>
         {days !== null && (
           <p className={`text-xs ${days <= 7 ? 'text-red-400' : 'text-zinc-500'}`}>
             {days < 0
