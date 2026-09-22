@@ -72,7 +72,7 @@ fun PantryItemRow(
             )
 
             FilledTonalIconButton(
-                onClick = { onAdjust(-item.unit.step) },
+                onClick = { onAdjust(-item.effectiveStep) },
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .size(36.dp),
@@ -80,7 +80,7 @@ fun PantryItemRow(
                 Icon(Icons.Filled.Remove, contentDescription = "Use some ${item.name}")
             }
             FilledTonalIconButton(
-                onClick = { onAdjust(item.unit.step) },
+                onClick = { onAdjust(item.effectiveStep) },
                 modifier = Modifier
                     .padding(start = 4.dp)
                     .size(36.dp),

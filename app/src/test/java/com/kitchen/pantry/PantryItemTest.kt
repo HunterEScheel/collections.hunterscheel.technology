@@ -12,15 +12,20 @@ import java.time.LocalDate
 
 class PantryItemTest {
 
-    private fun item(quantity: Double, threshold: Double = 0.0, expires: LocalDate? = null) =
-        PantryItem(
-            name = "Flour",
-            category = Category.BAKING,
-            quantity = quantity,
-            unit = MeasureUnit.KILOGRAMS,
-            lowThreshold = threshold,
-            expiresOn = expires?.toEpochDay(),
-        )
+    private fun item(
+        quantity: Double,
+        threshold: Double = 0.0,
+        expires: LocalDate? = null,
+        step: Double = 0.0,
+    ) = PantryItem(
+        name = "Flour",
+        category = Category.BAKING,
+        quantity = quantity,
+        unit = MeasureUnit.KILOGRAMS,
+        lowThreshold = threshold,
+        expiresOn = expires?.toEpochDay(),
+        step = step,
+    )
 
     @Test
     fun `empty item is out of stock`() {
@@ -69,6 +74,23 @@ class PantryItemTest {
         assertFalse(soon.isExpired(today))
         assertTrue(gone.isExpired(today))
         assertFalse(gone.expiresWithin(7, today))
+    }
+
+    @Test
+    fun `an item with no override steps by its unit`() {
+        assertEquals(MeasureUnit.KILOGRAMS.step, item(quantity = 1.0).effectiveStep, 0.0001)
+    }
+
+    @Test
+    fun `an override wins over the unit default`() {
+        assertEquals(0.25, item(quantity = 1.0, step = 0.25).effectiveStep, 0.0001)
+    }
+
+    @Test
+    fun `a zero or negative override falls back to the unit`() {
+        val unitStep = MeasureUnit.KILOGRAMS.step
+        assertEquals(unitStep, item(quantity = 1.0, step = 0.0).effectiveStep, 0.0001)
+        assertEquals(unitStep, item(quantity = 1.0, step = -2.0).effectiveStep, 0.0001)
     }
 
     @Test

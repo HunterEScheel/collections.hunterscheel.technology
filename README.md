@@ -11,6 +11,9 @@ Everything is stored on the device. No account, no network permission, no sync.
 - **Pantry list.** Every item with its quantity, unit, category, where it lives,
   and an optional best-before date. `+` / `-` buttons on each row adjust stock by a
   sensible step for its unit (50 g of flour, one jar of paprika) without opening a form.
+- **Custom increment.** Any item can override that step with its own "increment by"
+  value, so eggs move six at a time and olive oil moves a quarter litre. Leave it
+  blank and the item keeps following its unit.
 - **Restock tracking.** Each item has a "restock at" level. Anything at or below it is
   flagged **LOW**; anything at zero is flagged **OUT**.
 - **Shopping list.** Built automatically from those flags, grouped by category, with

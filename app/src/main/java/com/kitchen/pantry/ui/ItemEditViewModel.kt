@@ -24,6 +24,8 @@ data class ItemEditState(
     val quantity: String = "1",
     val unit: MeasureUnit = MeasureUnit.PIECES,
     val lowThreshold: String = "0",
+    /** Blank means "follow the unit", matching [PantryItem.step] being zero. */
+    val step: String = "",
     val location: String = "",
     val expiresOn: Long? = null,
     val notes: String = "",
@@ -35,7 +37,18 @@ data class ItemEditState(
     val quantityError: String? get() = if (quantity.toDoubleOrNull() == null) "Numbers only" else null
     val thresholdError: String?
         get() = if (lowThreshold.isNotBlank() && lowThreshold.toDoubleOrNull() == null) "Numbers only" else null
-    val canSave: Boolean get() = nameError == null && quantityError == null && thresholdError == null
+    val stepError: String?
+        get() = when {
+            step.isBlank() -> null
+            step.toDoubleOrNull() == null -> "Numbers only"
+            step.toDouble() <= 0.0 -> "Must be more than zero"
+            else -> null
+        }
+    val canSave: Boolean
+        get() = nameError == null && quantityError == null && thresholdError == null && stepError == null
+
+    /** What the +/- buttons will move once saved, for the field's hint. */
+    val effectiveStep: Double get() = step.toDoubleOrNull()?.takeIf { it > 0.0 } ?: unit.step
 
     val expirationDate: LocalDate? get() = expiresOn?.let(LocalDate::ofEpochDay)
 
@@ -46,6 +59,7 @@ data class ItemEditState(
         quantity = quantity.toDoubleOrNull() ?: 0.0,
         unit = unit,
         lowThreshold = lowThreshold.toDoubleOrNull() ?: 0.0,
+        step = step.toDoubleOrNull()?.takeIf { it > 0.0 } ?: 0.0,
         location = location.trim(),
         expiresOn = expiresOn,
         notes = notes.trim(),
@@ -59,6 +73,7 @@ data class ItemEditState(
             quantity = PantryItem.formatQuantity(item.quantity),
             unit = item.unit,
             lowThreshold = PantryItem.formatQuantity(item.lowThreshold),
+            step = if (item.step > 0.0) PantryItem.formatQuantity(item.step) else "",
             location = item.location,
             expiresOn = item.expiresOn,
             notes = item.notes,
@@ -89,6 +104,7 @@ class ItemEditViewModel(
     fun setQuantity(value: String) = _state.update { it.copy(quantity = value) }
     fun setUnit(value: MeasureUnit) = _state.update { it.copy(unit = value) }
     fun setLowThreshold(value: String) = _state.update { it.copy(lowThreshold = value) }
+    fun setStep(value: String) = _state.update { it.copy(step = value) }
     fun setLocation(value: String) = _state.update { it.copy(location = value) }
     fun setNotes(value: String) = _state.update { it.copy(notes = value) }
     fun setExpiry(date: LocalDate?) = _state.update { it.copy(expiresOn = date?.toEpochDay()) }

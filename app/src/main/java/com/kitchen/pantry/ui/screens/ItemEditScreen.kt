@@ -37,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.kitchen.pantry.data.Category
 import com.kitchen.pantry.data.MeasureUnit
+import com.kitchen.pantry.data.PantryItem
 import com.kitchen.pantry.ui.ItemEditViewModel
 import com.kitchen.pantry.ui.components.EnumPicker
 import java.time.LocalDate
@@ -130,6 +131,25 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                 selected = state.unit,
                 optionLabel = { it.abbreviation },
                 onSelect = viewModel::setUnit,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            val stepHint = buildString {
+                append("Each +/- tap moves ")
+                append(PantryItem.formatQuantity(state.effectiveStep))
+                append(" ")
+                append(state.unit.abbreviation)
+                if (state.step.isBlank()) append(", the default for this unit")
+            }
+            OutlinedTextField(
+                value = state.step,
+                onValueChange = viewModel::setStep,
+                label = { Text("Increment by") },
+                placeholder = { Text(PantryItem.formatQuantity(state.unit.step)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                isError = state.stepError != null,
+                supportingText = { Text(state.stepError ?: stepHint) },
                 modifier = Modifier.fillMaxWidth(),
             )
 

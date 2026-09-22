@@ -22,6 +22,11 @@ data class PantryItem(
     val location: String = "",
     /** Expiry or best-before date as an epoch day, or null when it doesn't expire. */
     @ColumnInfo(name = "expires_on") val expiresOn: Long? = null,
+    /**
+     * How much one tap of +/- moves the quantity. Zero means "whatever suits the
+     * unit", so an item follows [MeasureUnit.step] until someone overrides it.
+     */
+    @ColumnInfo(name = "step") val step: Double = 0.0,
     val notes: String = "",
     @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
 ) {
@@ -33,6 +38,9 @@ data class PantryItem(
             quantity <= lowThreshold -> StockStatus.LOW
             else -> StockStatus.OK
         }
+
+    /** The amount the +/- buttons actually move, override or unit default. */
+    val effectiveStep: Double get() = if (step > 0.0) step else unit.step
 
     /** Quantity rendered without a trailing ".0" on whole numbers. */
     val quantityLabel: String get() = formatQuantity(quantity)
