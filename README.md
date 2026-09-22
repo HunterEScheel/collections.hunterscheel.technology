@@ -15,18 +15,15 @@ Sign in at the root and pick a category:
 ```
 .                 the React app (Vite + Tailwind + Supabase)
 ├─ src/           /mtg lives at the top level; /kitchen and the gate in their own folders
-├─ android/       the My Kitchen Android app (Kotlin, offline-first, syncs to Supabase)
 └─ supabase/      migrations for both — card tables, and kitchen_* for the pantry
 ```
 
-The kitchen lives on the web: pantry, recipes and the shopping list, including a
-starter set of staples for a new kitchen. The Android app in `android/` reads and
-writes the same synced rows and still builds, but it is no longer published or offered
-for download — the website is the way in.
+The kitchen lives on the web: the pantry, recipes that tell you what you are missing,
+and a shopping list built from both. A new kitchen can start from a set of common
+staples rather than an empty list.
 
-Deletes on the web are soft (`deleted_at`), which is how a deletion reaches the phone —
-a hard delete would simply vanish from its next pull and the item would live on in a
-pocket forever.
+Deletes are soft: `deleted_at` is set and the row stays, so a deletion is something a
+second client could pull rather than a row that silently vanishes.
 
 ### Building without the Supabase keys
 
@@ -102,8 +99,3 @@ npm run build   # typecheck + production build
 npm run lint    # oxlint
 ```
 
-The Android app has its own build; see `android/README-android.md`.
-
-```sh
-cd android && ./gradlew test assembleDebug
-```

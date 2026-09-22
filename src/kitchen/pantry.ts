@@ -1,8 +1,8 @@
 import type { KitchenFilters, KitchenItem, StockStatus } from './types';
 
 /**
- * The pantry rules, kept as pure functions — the same shape as the Kotlin ones in
- * the Android app, so the two clients agree about what "low" means.
+ * The pantry rules, kept as pure functions: what counts as low, how much one press
+ * of +/- moves, and how the list is filtered and sorted.
  */
 
 export function stockStatus(item: KitchenItem): StockStatus {
@@ -160,7 +160,7 @@ export const UNITS = [
   'PIECES', 'PACKAGES', 'CANS', 'JARS', 'BAGS', 'BOXES', 'BOTTLES',
 ];
 
-/** Shelf order, matching the enum the Android app stores. */
+/** Shelf order. Stored by name, so entries may be added but not renamed. */
 export const CATEGORY_ORDER = [
   'BAKING',
   'GRAINS',

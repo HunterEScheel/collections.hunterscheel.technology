@@ -1,11 +1,7 @@
 import { convert, formatQuantity } from './pantry';
 import type { KitchenItem, KitchenRecipe, RecipeIngredient } from './types';
 
-/**
- * Whether the kitchen can cover one line of a recipe. The same four verdicts the
- * Android app reaches, from the same rules — the two clients must not disagree
- * about whether you can cook something.
- */
+/** Whether the kitchen can cover one line of a recipe. */
 export type Availability = 'have' | 'short' | 'missing' | 'unknown';
 
 export interface IngredientCheck {

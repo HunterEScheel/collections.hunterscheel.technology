@@ -9,11 +9,11 @@ import { starterPantry } from './staples';
  * The whole kitchen, fetched once and worked on in the browser.
  *
  * A home pantry is a few hundred rows, so filtering here rather than round-tripping
- * every keystroke keeps the search instant — the same call the Android app makes.
+ * every keystroke keeps the search instant.
  *
- * Deletes are soft. The phone learns about a deletion by seeing `deleted_at` set on
- * a row it already has; a hard delete would simply vanish from its next pull and the
- * item would live on forever in a pocket.
+ * Deletes are soft: `deleted_at` is set and the row stays. That keeps the door open
+ * for a second client to learn about a deletion by pulling the change, which a hard
+ * delete cannot express.
  */
 export function useKitchen(user: User) {
   const [items, setItems] = useState<KitchenItem[]>([]);

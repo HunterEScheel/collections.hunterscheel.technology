@@ -5,11 +5,11 @@
 -- is prefixed `kitchen_`, so the two repositories can push to one project without
 -- colliding on table names or migration numbers.
 --
--- Sync model: the Android client owns the row ids (it generates the uuid), so an
--- upsert is idempotent and no id has to be handed back. `updated_at` is stamped by
--- the server on every write, which makes it a safe pull cursor regardless of what
--- the phone thinks the time is. Deletes are soft (`deleted_at`) so they propagate
--- to other devices instead of silently reappearing.
+-- Sync model: clients own the row ids (they generate the uuid), so an upsert is
+-- idempotent and no id has to be handed back. `updated_at` is stamped by the server
+-- on every write, which makes it a safe pull cursor regardless of what a client
+-- thinks the time is. Deletes are soft (`deleted_at`) so they propagate to other
+-- devices instead of silently reappearing.
 
 create table if not exists public.kitchen_items (
   id uuid primary key,

@@ -3,9 +3,7 @@ name: Web
 on:
   push:
     branches: ["**"]
-    paths-ignore: ["android/**"]
   pull_request:
-    paths-ignore: ["android/**"]
 
 jobs:
   build:

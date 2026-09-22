@@ -1,8 +1,8 @@
 /**
  * The kitchen half of the collection, as `public.kitchen_items` stores it.
  *
- * These are the same rows the Android app syncs, so the names here mirror the
- * columns exactly rather than being prettied up.
+ * The names mirror the columns exactly rather than being prettied up, so what you
+ * read here is what is in the table.
  */
 export interface KitchenItem {
   id: string;
