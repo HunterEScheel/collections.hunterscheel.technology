@@ -15,4 +15,11 @@ class Converters {
 
     @TypeConverter
     fun stringToUnit(value: String): MeasureUnit = MeasureUnit.fromName(value)
+
+    @TypeConverter
+    fun entityToString(entity: SyncEntity): String = entity.name
+
+    @TypeConverter
+    fun stringToEntity(value: String): SyncEntity =
+        SyncEntity.entries.firstOrNull { it.name == value } ?: SyncEntity.ITEM
 }

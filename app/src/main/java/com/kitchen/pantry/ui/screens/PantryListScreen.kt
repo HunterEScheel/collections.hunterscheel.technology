@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
@@ -55,6 +56,7 @@ fun PantryListScreen(
     viewModel: PantryViewModel,
     onAddItem: () -> Unit,
     onOpenItem: (Long) -> Unit,
+    onOpenSync: () -> Unit,
     bottomBar: @Composable () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -76,6 +78,9 @@ fun PantryListScreen(
             TopAppBar(
                 title = { Text("My Kitchen") },
                 actions = {
+                    IconButton(onClick = onOpenSync) {
+                        Icon(Icons.Filled.CloudSync, contentDescription = "Sync")
+                    }
                     IconButton(onClick = { sortMenuOpen = true }) {
                         Icon(Icons.Filled.Sort, contentDescription = "Sort")
                     }

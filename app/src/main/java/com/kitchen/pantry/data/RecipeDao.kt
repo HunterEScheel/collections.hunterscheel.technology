@@ -33,8 +33,26 @@ interface RecipeDao {
     @Delete
     suspend fun deleteRecipe(recipe: Recipe)
 
-    @Query("UPDATE recipes SET planned = :planned, updated_at = :updatedAt WHERE id = :id")
+    @Query(
+        "UPDATE recipes SET planned = :planned, updated_at = :updatedAt, dirty = 1 WHERE id = :id",
+    )
     suspend fun setPlanned(id: Long, planned: Boolean, updatedAt: Long)
+
+    // --- syncing ---
+
+    @Transaction
+    @Query("SELECT * FROM recipes WHERE remote_id = :remoteId")
+    suspend fun findByRemoteId(remoteId: String): RecipeWithIngredients?
+
+    @Transaction
+    @Query("SELECT * FROM recipes WHERE dirty = 1")
+    suspend fun pendingPush(): List<RecipeWithIngredients>
+
+    @Query("UPDATE recipes SET dirty = 0 WHERE remote_id IN (:remoteIds)")
+    suspend fun markClean(remoteIds: List<String>)
+
+    @Query("DELETE FROM recipes WHERE remote_id = :remoteId")
+    suspend fun deleteByRemoteId(remoteId: String)
 
     @Insert
     suspend fun insertIngredients(ingredients: List<RecipeIngredient>)

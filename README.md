@@ -4,7 +4,10 @@ An Android app for keeping track of what's actually in the kitchen — baking go
 grains, spices, oils, cans, and everything else — so you find out you're out of
 cumin before you start cooking, not halfway through.
 
-Everything is stored on the device. No account, no network permission, no sync.
+Everything is stored on the device and the app works entirely offline. Optionally it
+also syncs to a Supabase project — the same one behind
+[mtg-collection-search](https://github.com/HunterEScheel/mtg-collection-search), so one
+login covers both — and your kitchen follows you to another device.
 
 ## What it does
 
@@ -44,6 +47,45 @@ Drinks · Other
 Units cover weight (g, kg, oz, lb), volume (ml, L, cups, tbsp, tsp) and whole
 things (pieces, packages, cans, jars, bags, boxes, bottles).
 
+## Syncing (optional)
+
+Two apps, one Supabase project, one account. The kitchen tables are all prefixed
+`kitchen_`, as are their migration files, so this repository and the collection app can
+push to the same project without colliding.
+
+1. Apply the schema to your existing Supabase project — either
+   `supabase db push` from this repository, or paste
+   `supabase/migrations/kitchen_0001_init.sql` into the SQL editor.
+2. Put the project's credentials in `local.properties` (not committed):
+
+   ```properties
+   supabase.url=https://YOUR-PROJECT.supabase.co
+   supabase.anonKey=YOUR-ANON-KEY
+   ```
+
+3. Rebuild, open the cloud icon on the Pantry screen, and sign in with your email.
+   You get a six-digit code rather than a magic link, because a code needs no deep
+   link to find its way back into the app.
+
+Leave `local.properties` empty and none of this exists: no account, no network traffic,
+and the sync screen says as much.
+
+### How the sync behaves
+
+- **Offline first.** Room stays the source of truth. Every screen reads local data, so
+  the app is exactly as fast and as usable with no signal.
+- **Client-owned ids.** Rows get a uuid when they are created on the phone, so pushing
+  is an idempotent upsert — a retry after a dropped connection cannot duplicate a row.
+- **Server-stamped times.** `updated_at` is set by a Postgres trigger, so the pull
+  cursor cannot be poisoned by a phone with a wrong clock.
+- **Push, then pull.** Local edits reach the server before remote rows are applied on
+  top, which is what makes the conflict rule meaningful rather than arbitrary.
+- **Last write wins, per row**, with one exception: a local row still waiting to be
+  pushed is never overwritten by an incoming one. Two devices editing the same item
+  between syncs means the later sync wins — there is no merge of individual fields.
+- **Deletes leave tombstones**, so removing something here removes it everywhere
+  instead of being resurrected by the next pull.
+
 ## Building
 
 Requires Android Studio (or a command-line Android SDK) with API 35 and JDK 17.
@@ -61,6 +103,7 @@ minSdk is 26 (Android 8.0), targetSdk 35.
 | Layer | What's there |
 | --- | --- |
 | `data/` | Room entities, DAOs, database, repositories, plus the filter/sort and recipe-matching rules |
+| `data/sync/` | The optional Supabase client, the local↔remote mapping, and the conflict rules |
 | `ui/` | Compose screens, view models, Material 3 theme |
 
 - **UI:** Jetpack Compose + Material 3, with dynamic color on Android 12+.
@@ -68,8 +111,12 @@ minSdk is 26 (Android 8.0), targetSdk 35.
   themselves when anything changes.
 - **State:** one `PantryViewModel` shared by the pantry and shopping screens, and a
   short-lived `ItemEditViewModel` per edited item.
-- **Dependency wiring:** a `KitchenApp` Application holding a single repository — no
-  DI framework, because there's nothing here that needs one.
+- **Dependency wiring:** a `KitchenApp` Application holding the repositories — no DI
+  framework, because there's nothing here that needs one.
+- **Sync:** a hand-rolled Supabase client over OkHttp and kotlinx.serialization. The
+  official SDK would pull in a stack of transitive dependencies to replace about a
+  hundred lines of HTTP; the conflict rules and the mapping are pure functions, which
+  is what makes them testable without a database or a network.
 
 Filtering and sorting live in Kotlin (`PantryFilter.kt`) rather than in SQL: a home
 pantry is a few hundred rows, and the rules stay readable and unit-testable in one place.

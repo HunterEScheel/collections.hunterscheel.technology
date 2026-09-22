@@ -39,6 +39,23 @@ interface PantryDao {
     @Query("DELETE FROM pantry_items")
     suspend fun deleteAll()
 
-    @Query("UPDATE pantry_items SET quantity = :quantity, updated_at = :updatedAt WHERE id = :id")
+    @Query(
+        "UPDATE pantry_items SET quantity = :quantity, updated_at = :updatedAt, dirty = 1 " +
+            "WHERE id = :id",
+    )
     suspend fun setQuantity(id: Long, quantity: Double, updatedAt: Long)
+
+    // --- syncing ---
+
+    @Query("SELECT * FROM pantry_items WHERE remote_id = :remoteId")
+    suspend fun findByRemoteId(remoteId: String): PantryItem?
+
+    @Query("SELECT * FROM pantry_items WHERE dirty = 1")
+    suspend fun pendingPush(): List<PantryItem>
+
+    @Query("UPDATE pantry_items SET dirty = 0 WHERE remote_id IN (:remoteIds)")
+    suspend fun markClean(remoteIds: List<String>)
+
+    @Query("DELETE FROM pantry_items WHERE remote_id = :remoteId")
+    suspend fun deleteByRemoteId(remoteId: String)
 }

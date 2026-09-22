@@ -2,6 +2,7 @@ package com.kitchen.pantry.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -9,7 +10,10 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /** One thing in the kitchen: a bag of flour, a jar of cumin, a carton of eggs. */
-@Entity(tableName = "pantry_items")
+@Entity(
+    tableName = "pantry_items",
+    indices = [Index(value = ["remote_id"], unique = true)],
+)
 data class PantryItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -29,6 +33,10 @@ data class PantryItem(
     @ColumnInfo(name = "step") val step: Double = 0.0,
     val notes: String = "",
     @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
+    /** Stable id shared with the server. Generated locally so upserts are idempotent. */
+    @ColumnInfo(name = "remote_id") val remoteId: String = newRemoteId(),
+    /** Changed since the last successful push. */
+    @ColumnInfo(name = "dirty") val dirty: Boolean = true,
 ) {
     val expirationDate: LocalDate? get() = expiresOn?.let(LocalDate::ofEpochDay)
 

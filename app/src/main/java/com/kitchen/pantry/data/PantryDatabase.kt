@@ -14,8 +14,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // it back on (with the androidx.room Gradle plugin and a schemaDirectory) when
 // the first migration needs a schema to diff against.
 @Database(
-    entities = [PantryItem::class, Recipe::class, RecipeIngredient::class],
-    version = 3,
+    entities = [PantryItem::class, Recipe::class, RecipeIngredient::class, SyncTombstone::class],
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -24,6 +24,8 @@ abstract class PantryDatabase : RoomDatabase() {
     abstract fun pantryDao(): PantryDao
 
     abstract fun recipeDao(): RecipeDao
+
+    abstract fun syncDao(): SyncDao
 
     companion object {
         /** Adds the per-item "increment by" override; 0 keeps the unit's own step. */
@@ -68,6 +70,45 @@ abstract class PantryDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the syncing columns. Existing rows are given ids on the spot — SQLite
+         * has no uuid() of its own, so one is assembled from random bytes in the
+         * version-4 shape the server expects.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                listOf("pantry_items", "recipes").forEach { table ->
+                    db.execSQL("ALTER TABLE $table ADD COLUMN remote_id TEXT NOT NULL DEFAULT ''")
+                    db.execSQL("ALTER TABLE $table ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1")
+                    db.execSQL("UPDATE $table SET remote_id = $UUID_EXPRESSION")
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS index_${table}_remote_id " +
+                            "ON $table (remote_id)",
+                    )
+                }
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS sync_tombstones (
+                        remote_id TEXT PRIMARY KEY NOT NULL,
+                        entity TEXT NOT NULL,
+                        deleted_at INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
+
+        /** A version-4 uuid built out of random bytes, since SQLite has no uuid(). */
+        private const val UUID_EXPRESSION =
+            "lower(" +
+                "substr(hex(randomblob(4)), 1, 8) || '-' || " +
+                "substr(hex(randomblob(2)), 1, 4) || '-4' || " +
+                "substr(hex(randomblob(2)), 2, 3) || '-' || " +
+                "substr('89ab', abs(random()) % 4 + 1, 1) || " +
+                "substr(hex(randomblob(2)), 2, 3) || '-' || " +
+                "substr(hex(randomblob(6)), 1, 12)" +
+                ")"
+
         @Volatile
         private var instance: PantryDatabase? = null
 
@@ -76,7 +117,7 @@ abstract class PantryDatabase : RoomDatabase() {
                 context.applicationContext,
                 PantryDatabase::class.java,
                 "pantry.db",
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
         }
     }
 }

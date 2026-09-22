@@ -9,7 +9,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 
 /** Something you cook. Ingredients live in [RecipeIngredient], keyed by [id]. */
-@Entity(tableName = "recipes")
+@Entity(
+    tableName = "recipes",
+    indices = [Index(value = ["remote_id"], unique = true)],
+)
 data class Recipe(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -19,6 +22,10 @@ data class Recipe(
     /** On the shopping plan: what it needs and you lack shows up on the list. */
     val planned: Boolean = false,
     @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
+    /** Stable id shared with the server. Generated locally so upserts are idempotent. */
+    @ColumnInfo(name = "remote_id") val remoteId: String = newRemoteId(),
+    /** Changed since the last successful push. */
+    @ColumnInfo(name = "dirty") val dirty: Boolean = true,
 )
 
 /**

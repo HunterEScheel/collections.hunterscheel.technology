@@ -25,11 +25,13 @@ import com.kitchen.pantry.ui.screens.RecipeDetailScreen
 import com.kitchen.pantry.ui.screens.RecipeEditScreen
 import com.kitchen.pantry.ui.screens.RecipeListScreen
 import com.kitchen.pantry.ui.screens.ShoppingListScreen
+import com.kitchen.pantry.ui.screens.SyncScreen
 
 private object Routes {
     const val PANTRY = "pantry"
     const val RECIPES = "recipes"
     const val SHOPPING = "shopping"
+    const val SYNC = "sync"
     const val EDIT_ITEM = "edit/{itemId}"
     const val RECIPE_DETAIL = "recipe/{recipeId}"
     const val EDIT_RECIPE = "recipe/{recipeId}/edit"
@@ -54,6 +56,7 @@ fun KitchenAppRoot() {
                 viewModel = pantryViewModel,
                 onAddItem = { navController.navigate(Routes.editItem(0)) },
                 onOpenItem = { id -> navController.navigate(Routes.editItem(id)) },
+                onOpenSync = { navController.navigate(Routes.SYNC) },
                 bottomBar = { KitchenBottomBar(navController) },
             )
         }
@@ -70,6 +73,12 @@ fun KitchenAppRoot() {
                 viewModel = shoppingViewModel,
                 onOpenItem = { id -> navController.navigate(Routes.editItem(id)) },
                 bottomBar = { KitchenBottomBar(navController) },
+            )
+        }
+        composable(Routes.SYNC) {
+            SyncScreen(
+                viewModel = viewModel(factory = SyncViewModel.Factory),
+                onBack = { navController.popBackStack() },
             )
         }
         composable(

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Only ever used for syncing to your own Supabase project, and only once you
+         sign in. With no account the app never touches the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".KitchenApp"
         android:allowBackup="true"

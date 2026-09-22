@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.math.max
 
 /** The single door between the UI and the database. */
-class PantryRepository(private val dao: PantryDao) {
+class PantryRepository(private val dao: PantryDao, private val sync: SyncDao) {
 
     fun observeAll(): Flow<List<PantryItem>> = dao.observeAll()
 
@@ -13,9 +13,13 @@ class PantryRepository(private val dao: PantryDao) {
     suspend fun find(id: Long): PantryItem? = dao.findById(id)
 
     suspend fun save(item: PantryItem): Long =
-        dao.upsert(item.copy(updatedAt = System.currentTimeMillis()))
+        dao.upsert(item.copy(updatedAt = System.currentTimeMillis(), dirty = true))
 
-    suspend fun delete(item: PantryItem) = dao.delete(item)
+    /** Deleting leaves a tombstone, so the deletion reaches the other devices too. */
+    suspend fun delete(item: PantryItem) {
+        dao.delete(item)
+        sync.record(SyncTombstone(remoteId = item.remoteId, entity = SyncEntity.ITEM))
+    }
 
     /** Nudges a quantity by [delta], clamped at zero so stock never goes negative. */
     suspend fun adjustQuantity(item: PantryItem, delta: Double) {
