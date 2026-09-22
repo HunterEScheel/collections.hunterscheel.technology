@@ -22,8 +22,9 @@ The kitchen lives on the web: the pantry, recipes that tell you what you are mis
 and a shopping list built from both. A new kitchen can start from a set of common
 staples rather than an empty list.
 
-Deletes are soft: `deleted_at` is set and the row stays, so a deletion is something a
-second client could pull rather than a row that silently vanishes.
+Deleting removes the row. Soft deletes are for telling another client what went
+away; with one client there is nobody to tell, and a table of hidden rows that every
+query must remember to filter is a bug waiting to happen.
 
 ### Building without the Supabase keys
 

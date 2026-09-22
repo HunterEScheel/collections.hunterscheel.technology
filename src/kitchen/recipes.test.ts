@@ -22,7 +22,6 @@ function pantry(name: string, quantity: number, unit: string): KitchenItem {
     expires_on: null,
     notes: '',
     updated_at: '2026-01-01T00:00:00Z',
-    deleted_at: null,
   };
 }
 
@@ -40,7 +39,6 @@ function recipe(name: string, ingredients: RecipeIngredient[]): KitchenRecipe {
     planned: true,
     ingredients,
     updated_at: '2026-01-01T00:00:00Z',
-    deleted_at: null,
   };
 }
 

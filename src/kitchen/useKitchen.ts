@@ -11,9 +11,9 @@ import { starterPantry } from './staples';
  * A home pantry is a few hundred rows, so filtering here rather than round-tripping
  * every keystroke keeps the search instant.
  *
- * Deletes are soft: `deleted_at` is set and the row stays. That keeps the door open
- * for a second client to learn about a deletion by pulling the change, which a hard
- * delete cannot express.
+ * Deleting removes the row. Soft deletes existed so a second client could pull the
+ * deletion; with one client there is nobody to tell, and a table full of rows that
+ * every query has to remember to hide is a bug waiting to happen.
  */
 export function useKitchen(user: User) {
   const [items, setItems] = useState<KitchenItem[]>([]);
@@ -24,8 +24,8 @@ export function useKitchen(user: User) {
   const load = useCallback(async () => {
     setLoading(true);
     const [itemRows, recipeRows] = await Promise.all([
-      supabase.from('kitchen_items').select('*').is('deleted_at', null).order('name'),
-      supabase.from('kitchen_recipes').select('*').is('deleted_at', null).order('name'),
+      supabase.from('kitchen_items').select('*').order('name'),
+      supabase.from('kitchen_recipes').select('*').order('name'),
     ]);
 
     const failure = itemRows.error ?? recipeRows.error;
@@ -89,10 +89,7 @@ export function useKitchen(user: User) {
 
   const deleteItem = useCallback(
     async (item: KitchenItem) => {
-      const { error } = await supabase
-        .from('kitchen_items')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', item.id);
+      const { error } = await supabase.from('kitchen_items').delete().eq('id', item.id);
       if (error) throw new Error(error.message);
       setItems((current) => current.filter((row) => row.id !== item.id));
     },
@@ -138,8 +135,7 @@ export function useKitchen(user: User) {
   const seedStaples = useCallback(async () => {
     const { count, error: countError } = await supabase
       .from('kitchen_items')
-      .select('id', { count: 'exact', head: true })
-      .is('deleted_at', null);
+      .select('id', { count: 'exact', head: true });
     if (countError) throw new Error(countError.message);
     if (count && count > 0) return 0;
 
@@ -155,10 +151,7 @@ export function useKitchen(user: User) {
   }, [user.id, load]);
 
   const deleteRecipe = useCallback(async (recipe: KitchenRecipe) => {
-    const { error } = await supabase
-      .from('kitchen_recipes')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', recipe.id);
+    const { error } = await supabase.from('kitchen_recipes').delete().eq('id', recipe.id);
     if (error) throw new Error(error.message);
     setRecipes((current) => current.filter((row) => row.id !== recipe.id));
   }, []);

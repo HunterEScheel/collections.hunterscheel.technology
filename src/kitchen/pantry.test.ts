@@ -22,7 +22,6 @@ function item(overrides: Partial<KitchenItem> = {}): KitchenItem {
     expires_on: null,
     notes: '',
     updated_at: '2026-01-01T00:00:00Z',
-    deleted_at: null,
     ...overrides,
   };
 }

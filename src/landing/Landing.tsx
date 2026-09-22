@@ -93,10 +93,7 @@ function useCounts() {
     async function load() {
       const [cards, kitchen] = await Promise.all([
         supabase.from('collection_cards').select('id', { count: 'exact', head: true }),
-        supabase
-          .from('kitchen_items')
-          .select('id', { count: 'exact', head: true })
-          .is('deleted_at', null),
+        supabase.from('kitchen_items').select('id', { count: 'exact', head: true }),
       ]);
       if (cancelled) return;
       setCounts({ cards: cards.count ?? null, kitchen: kitchen.count ?? null });

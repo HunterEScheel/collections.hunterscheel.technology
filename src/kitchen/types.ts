@@ -17,7 +17,6 @@ export interface KitchenItem {
   expires_on: number | null;
   notes: string;
   updated_at: string;
-  deleted_at: string | null;
 }
 
 /** How urgently an item needs restocking — the same three states as the phone. */
@@ -57,5 +56,4 @@ export interface KitchenRecipe {
   planned: boolean;
   ingredients: RecipeIngredient[];
   updated_at: string;
-  deleted_at: string | null;
 }

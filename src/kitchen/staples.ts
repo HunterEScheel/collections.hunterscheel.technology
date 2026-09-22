@@ -1,7 +1,7 @@
 import type { KitchenItem } from './types';
 
 /** A staple as it is seeded: the columns the server fills in are added on insert. */
-export type StapleSeed = Omit<KitchenItem, 'id' | 'user_id' | 'updated_at' | 'deleted_at'>;
+export type StapleSeed = Omit<KitchenItem, 'id' | 'user_id' | 'updated_at'>;
 
 /**
  * A reasonable starting point so a new kitchen is not an empty list. Offered from the
