@@ -46,7 +46,8 @@ export function AuthGate({ children }: { children: (user: User) => ReactNode }) 
     return (
       <div className="flex min-h-screen items-center justify-center">
         <form onSubmit={sendLink} className="w-80 space-y-4 rounded-xl bg-zinc-900 p-6">
-          <h1 className="text-lg font-semibold">MTG Collection Search</h1>
+          <h1 className="text-lg font-semibold">Collections</h1>
+          <p className="-mt-2 text-xs text-zinc-500">Cards and kitchen, one account.</p>
           <div className="space-y-2">
             {([
               ['github', 'Continue with GitHub'],

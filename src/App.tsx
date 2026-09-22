@@ -5,7 +5,6 @@ import { ownedPrice } from './lib/scryfall';
 import { useAllCards } from './hooks/useAllCards';
 import { groupVariants } from './lib/groupVariants';
 import { useSearch, EMPTY_FILTERS, type UiFilters } from './hooks/useSearch';
-import { AuthGate } from './components/AuthGate';
 import { SearchBar } from './components/SearchBar';
 import { FilterBar } from './components/FilterBar';
 import { ResultsGrid } from './components/ResultsGrid';
@@ -23,7 +22,7 @@ import { SearchLegend } from './components/SearchLegend';
 import { TokenTypesPanel } from './components/TokenTypesPanel';
 import type { OwnedCard } from './types';
 
-function Main({ user }: { user: User }) {
+export function Main({ user }: { user: User }) {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<UiFilters>(EMPTY_FILTERS);
   const [view, setView] = useState<'grid' | 'table'>('grid');
@@ -601,6 +600,3 @@ function Main({ user }: { user: User }) {
   );
 }
 
-export default function App() {
-  return <AuthGate>{(user) => <Main user={user} />}</AuthGate>;
-}
