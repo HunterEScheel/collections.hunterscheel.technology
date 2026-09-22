@@ -23,5 +23,20 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # The Supabase client throws at module load without these, which at build time
+      # makes every module that imports it unreachable — the bundler then drops the
+      # whole app and still exits 0. Placeholders keep the build representative.
       - name: Typecheck and build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+
+      - name: Check the app is actually in the bundle
+        run: |
+          # Table names rather than UI copy: a canary that will not go stale
+          # the next time a button is reworded.
+          if ! grep -q "collection_cards" dist/assets/*.js || ! grep -q "kitchen_items" dist/assets/*.js; then
+            echo "The bundle has no application code in it." >&2
+            exit 1
+          fi

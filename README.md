@@ -29,18 +29,17 @@ Deletes on the web are soft (`deleted_at`), which is how a deletion reaches the 
 a hard delete would simply vanish from its next pull and the item would live on in a
 pocket forever.
 
-### Known issue: the production bundle is missing the app
+### Building without the Supabase keys
 
-`npm run build` emits a bundle containing React and nothing else — no app code, not even
-the sign-in screen. It reproduces on a clean checkout of `main` with `npm ci`, with or
-without `tsc -b`, with or without `@vitejs/plugin-react`, and with tree-shaking disabled,
-so it is not caused by the kitchen work. Until it is fixed a deploy will serve a blank
-page. Reproduce it with:
+`src/lib/supabase.ts` throws at module load when `VITE_SUPABASE_URL` or
+`VITE_SUPABASE_ANON_KEY` is missing. At build time those are inlined, so without them
+the throw is unconditional, every module that imports the client becomes unreachable,
+and the bundler drops the lot — you get a bundle with React in it and none of the app,
+and the build still exits 0.
 
-```sh
-npm ci && npx vite build
-grep -c "Continue with GitHub" dist/assets/*.js   # 0 — the app is not in there
-```
+So always build with the keys set. A deploy has them; CI passes placeholders for the
+same reason, and then checks the bundle actually contains the app rather than trusting
+the exit code.
 
 ## Setup
 
