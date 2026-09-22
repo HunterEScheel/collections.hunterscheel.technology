@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
 }
 
 android {
@@ -48,13 +47,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-}
-
-// The Room plugin gives each build variant its own schema directory. Pointing
-// KSP at one shared folder instead makes the debug and release tasks race and
-// fail with "Empty schema file".
-room {
-    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
