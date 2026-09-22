@@ -32,7 +32,7 @@ export function Landing({ user }: { user: User }) {
           to="/kitchen"
           emoji="🍳"
           title="Kitchen"
-          blurb="Search the pantry — baking, grains, spices — and see what is running low."
+          blurb="The pantry, recipes, and a shopping list that knows what you already have."
           detail={
             counts.kitchen === null
               ? null

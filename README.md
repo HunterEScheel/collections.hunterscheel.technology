@@ -10,7 +10,7 @@ Sign in at the root and pick a category:
 | --- | --- |
 | `/` | The gate — sign in, then choose which collection to search |
 | `/mtg` | Magic collection: Scryfall-syntax search over your binders |
-| `/kitchen` | Pantry: search what is in the kitchen and what is running low |
+| `/kitchen` | Pantry, recipes and the shopping list |
 
 ```
 .                 the React app (Vite + Tailwind + Supabase)
@@ -19,10 +19,28 @@ Sign in at the root and pick a category:
 └─ supabase/      migrations for both — card tables, and kitchen_* for the pantry
 ```
 
-The kitchen is kept up to date on the phone, standing at the shelf with no signal; the
-website reads the same synced data. The Android app is downloadable from `/kitchen` —
-CI publishes the APK to a fixed release tag on every push to `main`, so the link never
-goes stale.
+The kitchen has the same three places on the web as on the phone — pantry, recipes,
+shopping list — reading and writing the same synced rows. Use whichever is to hand: the
+phone works with no signal at the shelf, the website is easier to type into. The Android
+app is downloadable from `/kitchen`; CI publishes the APK to a fixed release tag on every
+push to `main`, so the link never goes stale.
+
+Deletes on the web are soft (`deleted_at`), which is how a deletion reaches the phone —
+a hard delete would simply vanish from its next pull and the item would live on in a
+pocket forever.
+
+### Known issue: the production bundle is missing the app
+
+`npm run build` emits a bundle containing React and nothing else — no app code, not even
+the sign-in screen. It reproduces on a clean checkout of `main` with `npm ci`, with or
+without `tsc -b`, with or without `@vitejs/plugin-react`, and with tree-shaking disabled,
+so it is not caused by the kitchen work. Until it is fixed a deploy will serve a blank
+page. Reproduce it with:
+
+```sh
+npm ci && npx vite build
+grep -c "Continue with GitHub" dist/assets/*.js   # 0 — the app is not in there
+```
 
 ## Setup
 

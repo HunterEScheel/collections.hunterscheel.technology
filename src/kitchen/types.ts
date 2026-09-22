@@ -39,3 +39,24 @@ export const EMPTY_KITCHEN_FILTERS: KitchenFilters = {
   restockOnly: false,
   sort: 'name',
 };
+
+/** One line of a recipe, as it is stored inside the recipe's `ingredients` jsonb. */
+export interface RecipeIngredient {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
+/** A recipe, as `public.kitchen_recipes` stores it. */
+export interface KitchenRecipe {
+  id: string;
+  user_id: string;
+  name: string;
+  servings: number;
+  notes: string;
+  /** On the shopping plan: what it needs and you lack joins the shopping list. */
+  planned: boolean;
+  ingredients: RecipeIngredient[];
+  updated_at: string;
+  deleted_at: string | null;
+}
