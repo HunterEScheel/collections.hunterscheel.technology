@@ -19,11 +19,11 @@ class PantryRepository(private val dao: PantryDao) {
 
     /** Nudges a quantity by [delta], clamped at zero so stock never goes negative. */
     suspend fun adjustQuantity(item: PantryItem, delta: Double) {
-        dao.setQuantity(item.id, max(0.0, item.quantity + delta))
+        dao.setQuantity(item.id, max(0.0, item.quantity + delta), System.currentTimeMillis())
     }
 
     suspend fun setQuantity(item: PantryItem, quantity: Double) {
-        dao.setQuantity(item.id, max(0.0, quantity))
+        dao.setQuantity(item.id, max(0.0, quantity), System.currentTimeMillis())
     }
 
     /** Fills an empty pantry with common staples. No-op if anything is already there. */

@@ -40,5 +40,5 @@ interface PantryDao {
     suspend fun deleteAll()
 
     @Query("UPDATE pantry_items SET quantity = :quantity, updated_at = :updatedAt WHERE id = :id")
-    suspend fun setQuantity(id: Long, quantity: Double, updatedAt: Long = System.currentTimeMillis())
+    suspend fun setQuantity(id: Long, quantity: Double, updatedAt: Long)
 }
