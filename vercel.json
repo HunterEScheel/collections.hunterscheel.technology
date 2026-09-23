@@ -9,6 +9,10 @@
       "destination": "/bio.html"
     },
     {
+      "source": "/hexmap",
+      "destination": "/hexmap.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
