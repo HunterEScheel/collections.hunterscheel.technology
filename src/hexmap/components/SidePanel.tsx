@@ -44,20 +44,26 @@ export function SidePanel({
   isOpen = true,
   onClose,
 }: SidePanelProps) {
-  if (!isOpen) return null;
-  const [encounter, setEncounter] = useState<GeneratedEncounter | null>(null);
-  const [generating, setGenerating] = useState(false);
   const terrain = hexData?.terrain ?? "unknown";
   const challengeTier = hexData?.challengeTier ?? null;
   const landmark = hexData?.landmark ?? null;
   const landmarkName = hexData?.landmarkName ?? null;
   const canHaveEncounters = terrain !== "unknown" && landmark !== "allied_city";
 
+  const [encounter, setEncounter] = useState<GeneratedEncounter | null>(null);
+  const [generating, setGenerating] = useState(false);
   // Local draft of the landmark name so the input stays editable until blur.
   const [nameDraft, setNameDraft] = useState<string>(landmarkName ?? "");
+  const [showCompletedHexQuests, setShowCompletedHexQuests] = useState(false);
   useEffect(() => {
     setNameDraft(landmarkName ?? "");
   }, [selectedHex?.col, selectedHex?.row, landmarkName]);
+
+  // Every hook is called above this line. Returning earlier — as this did — means
+  // the panel closing changes how many hooks run, and React matches state to hook
+  // calls by order alone: on mobile, closing and reopening would hand the wrong
+  // state to the wrong hook, or crash outright.
+  if (!isOpen) return null;
 
   function commitName() {
     if (!isAdmin || !adminPin || !selectedHex) return;
@@ -81,7 +87,6 @@ export function SidePanel({
     tower: "Tower",
     major_threat: "Major Threat",
   };
-  const [showCompletedHexQuests, setShowCompletedHexQuests] = useState(false);
   const allHexQuests = selectedHex
     ? quests.filter(
         (q) => q.hexCol === selectedHex.col && q.hexRow === selectedHex.row
