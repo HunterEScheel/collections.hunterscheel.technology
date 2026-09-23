@@ -272,6 +272,30 @@ async function fetchItemsByRarity(rarity: string): Promise<MagicItemDetail[]> {
   return items;
 }
 
+// Fetch one item by slug. Used for the items no rarity query can reach.
+async function fetchItemBySlug(slug: string): Promise<MagicItemDetail | null> {
+  try {
+    const res = await fetch(`${OPEN5E_BASE}/magicitems/${slug}/?format=json`);
+    if (!res.ok) return null;
+    const d = (await res.json()) as {
+      slug: string;
+      name: string;
+      rarity: string;
+      desc: string;
+    };
+    return {
+      index: d.slug,
+      name: d.name,
+      // Left as Open5e reports it — "varies" is the honest answer, and the rule's
+      // own rarity is what decides which variant gets stocked.
+      rarity: d.rarity ? d.rarity.charAt(0).toUpperCase() + d.rarity.slice(1) : "Varies",
+      description: d.desc ?? "",
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Fetch all items (for search) — lazy, builds from per-rarity caches
 let allItemsCache: MagicItemDetail[] | null = null;
 
@@ -279,7 +303,21 @@ async function fetchAllMagicItems(): Promise<MagicItemDetail[]> {
   if (allItemsCache) return allItemsCache;
   const rarities = ["common", "uncommon", "rare", "very rare", "legendary"];
   const batches = await Promise.all(rarities.map((r) => fetchItemsByRarity(r)));
-  allItemsCache = batches.flat();
+
+  const byIndex = new Map<string, MagicItemDetail>();
+  for (const item of batches.flat()) byIndex.set(item.index, item);
+
+  // The variant items carry rarity "varies" in Open5e, so none of the rarity
+  // queries above return them and they never became searchable — which meant no
+  // rule could be written for a Potion of Healing or a Spell Scroll, even though
+  // expandVariant() has always known how to stock them. Fetch them by slug from
+  // the same set the restock path uses, so the two cannot drift apart.
+  const variants = await Promise.all([...VARIANT_SLUGS].map(fetchItemBySlug));
+  for (const variant of variants) {
+    if (variant && !byIndex.has(variant.index)) byIndex.set(variant.index, variant);
+  }
+
+  allItemsCache = [...byIndex.values()];
   return allItemsCache;
 }
 

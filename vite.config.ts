@@ -19,9 +19,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        bio: resolve(__dirname, 'bio.html'),
-        hexmap: resolve(__dirname, 'hexmap.html'),
+        main: resolve(import.meta.dirname, 'index.html'),
+        bio: resolve(import.meta.dirname, 'bio.html'),
+        hexmap: resolve(import.meta.dirname, 'hexmap.html'),
       },
     },
   },
