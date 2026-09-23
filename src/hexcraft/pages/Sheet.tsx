@@ -108,7 +108,7 @@ export function Sheet() {
     return (
       <div className="space-y-3">
         <p className="text-sm text-zinc-500">Character not found.</p>
-        <Link to="/" className="text-sm text-amber-300 hover:text-amber-200">
+        <Link to="/hexcraft" className="text-sm text-amber-300 hover:text-amber-200">
           ← Back to roster
         </Link>
       </div>
@@ -203,7 +203,7 @@ export function Sheet() {
           )}
           {id && (
             <Link
-              to={`/builder/${id}`}
+              to={`/hexcraft/builder/${id}`}
               className="text-amber-300 hover:text-amber-200"
             >
               Edit ▸

@@ -3,7 +3,7 @@
 // and upsert them into Supabase.
 //
 // Usage:
-//   1. Put your skill list in scripts/skills.txt (one "Name | description" per line,
+//   1. Put your skill list in scripts/hexcraft-skills.txt (one "Name | description" per line,
 //      or just "Name" — description is optional).
 //   2. Set env vars: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 //   3. node scripts/generate-embeddings.mjs
@@ -26,7 +26,7 @@ if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-const lines = readFileSync('scripts/skills.txt', 'utf8')
+const lines = readFileSync('scripts/hexcraft-skills.txt', 'utf8')
   .split('\n')
   .map((l) => l.trim())
   .filter(Boolean)
@@ -66,7 +66,7 @@ for (let i = 0; i < skills.length; i += BATCH_SIZE) {
     embedding: embeddings[j],
   }))
   const { error } = await supabase
-    .from('skill_embeddings')
+    .from('hexcraft_skill_embeddings')
     .upsert(rows, { onConflict: 'skill_name' })
   if (error) {
     console.error('upsert failed', error)

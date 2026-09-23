@@ -82,11 +82,11 @@ export function Builder() {
     if (isEdit && id) {
       const ok = await updateCharacter(id, normalized)
       setSaving(false)
-      if (ok) navigate(`/sheet/${id}`)
+      if (ok) navigate(`/hexcraft/sheet/${id}`)
     } else {
       const newId = await saveCharacter(normalized)
       setSaving(false)
-      if (newId) navigate(`/sheet/${newId}`)
+      if (newId) navigate(`/hexcraft/sheet/${newId}`)
     }
   }
 

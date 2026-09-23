@@ -11,16 +11,22 @@ Sign in at the root and pick a category:
 | `/` | The gate — sign in, then choose which collection to search |
 | `/mtg` | Magic collection: Scryfall-syntax search over your binders |
 | `/kitchen` | Pantry, recipes and the shopping list |
+| `/hexcraft` | Hexcraft RPG: character builder, sheets, monsters, GM guide |
 
 ```
 .                 the React app (Vite + Tailwind + Supabase)
-├─ src/           /mtg lives at the top level; /kitchen and the gate in their own folders
-└─ supabase/      migrations for both — card tables, and kitchen_* for the pantry
+├─ src/           /mtg lives at the top level; the gate and the other apps in their own folders
+├─ scripts/       one-off tooling (Hexcraft skill embeddings)
+└─ supabase/      migrations for all three — cards, kitchen_*, hexcraft_*
 ```
 
 The kitchen lives on the web: the pantry, recipes that tell you what you are missing,
 and a shopping list built from both. A new kitchen can start from a set of common
 staples rather than an empty list.
+
+Hexcraft is the RPG character builder, with sheets, a monster maker and the GM guide.
+Its skill search wants embeddings in the database; see `docs/hexcraft.md`. Without them
+the rest of the app works and skills can be typed in by hand.
 
 Deleting removes the row. Soft deletes are for telling another client what went
 away; with one client there is nobody to tell, and a table of hidden rows that every
@@ -48,7 +54,7 @@ the exit code.
    ```
 
    (or paste the files in `supabase/migrations/` into the SQL editor — the `0001…`
-   series is the card collection, `kitchen_0001_init.sql` the pantry)
+   series is the card collection, `kitchen_*` the pantry, `hexcraft_*` the RPG)
 
 2. Enable email (magic link) auth in the Supabase dashboard under Authentication → Providers.
 

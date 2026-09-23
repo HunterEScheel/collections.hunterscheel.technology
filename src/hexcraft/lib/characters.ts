@@ -14,9 +14,12 @@ export async function saveCharacter(c: Character): Promise<string | null> {
     console.warn('supabase not configured — character not saved')
     return null
   }
+  // RLS ties a character to its owner; the column is set here so the insert
+  // satisfies the policy rather than being rejected by it.
+  const { data: auth } = await supabase.auth.getUser()
   const { data, error } = await supabase
-    .from('characters')
-    .insert({ name: c.name || 'Unnamed', data: c })
+    .from('hexcraft_characters')
+    .insert({ name: c.name || 'Unnamed', data: c, user_id: auth.user?.id })
     .select('id')
     .single()
   if (error) {
@@ -32,7 +35,7 @@ export async function updateCharacter(
 ): Promise<boolean> {
   if (!supabaseConfigured || !supabase) return false
   const { error } = await supabase
-    .from('characters')
+    .from('hexcraft_characters')
     .update({ name: c.name || 'Unnamed', data: c })
     .eq('id', id)
   if (error) {
@@ -47,7 +50,7 @@ export async function getCharacter(
 ): Promise<SavedCharacterRow | null> {
   if (!supabaseConfigured || !supabase) return null
   const { data, error } = await supabase
-    .from('characters')
+    .from('hexcraft_characters')
     .select('id, name, data, created_at, updated_at')
     .eq('id', id)
     .single()
@@ -61,7 +64,7 @@ export async function getCharacter(
 export async function listCharacters(): Promise<SavedCharacterRow[]> {
   if (!supabaseConfigured || !supabase) return []
   const { data, error } = await supabase
-    .from('characters')
+    .from('hexcraft_characters')
     .select('id, name, data, created_at, updated_at')
     .order('updated_at', { ascending: false })
   if (error) {
@@ -73,7 +76,7 @@ export async function listCharacters(): Promise<SavedCharacterRow[]> {
 
 export async function deleteCharacter(id: string): Promise<boolean> {
   if (!supabaseConfigured || !supabase) return false
-  const { error } = await supabase.from('characters').delete().eq('id', id)
+  const { error } = await supabase.from('hexcraft_characters').delete().eq('id', id)
   if (error) {
     console.error('deleteCharacter failed', error)
     return false

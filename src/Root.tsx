@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthGate } from './components/AuthGate';
 import { Landing } from './landing/Landing';
 import { KitchenApp } from './kitchen/KitchenApp';
+import { HexcraftApp } from './hexcraft/HexcraftApp';
 import { Main as MtgApp } from './App';
 
 /**
@@ -18,6 +19,7 @@ export function Root() {
           <Route path="/" element={<Landing user={user} />} />
           <Route path="/mtg/*" element={<MtgApp user={user} />} />
           <Route path="/kitchen/*" element={<KitchenApp user={user} />} />
+          <Route path="/hexcraft/*" element={<HexcraftApp />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}

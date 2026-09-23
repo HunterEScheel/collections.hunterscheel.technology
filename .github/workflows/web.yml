@@ -34,7 +34,9 @@ jobs:
         run: |
           # Table names rather than UI copy: a canary that will not go stale
           # the next time a button is reworded.
-          if ! grep -q "collection_cards" dist/assets/*.js || ! grep -q "kitchen_items" dist/assets/*.js; then
+          if ! grep -q "collection_cards" dist/assets/*.js \
+            || ! grep -q "kitchen_items" dist/assets/*.js \
+            || ! grep -q "hexcraft_characters" dist/assets/*.js; then
             echo "The bundle has no application code in it." >&2
             exit 1
           fi

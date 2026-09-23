@@ -21,7 +21,7 @@ export async function searchSkills(
   if (!supabaseConfigured || !supabase || !query.trim()) return []
 
   const { data, error } = await supabase
-    .from('skill_embeddings')
+    .from('hexcraft_skill_embeddings')
     .select('id, skill_name, description')
     .ilike('skill_name', `%${query}%`)
     .order('skill_name', { ascending: true })
@@ -45,7 +45,7 @@ export async function searchSkillsBySimilarity(
 ): Promise<SkillSearchResult[]> {
   if (!supabaseConfigured || !supabase) return []
 
-  const { data, error } = await supabase.rpc('match_skills', {
+  const { data, error } = await supabase.rpc('hexcraft_match_skills', {
     query_embedding: embedding,
     match_count: limit,
   })

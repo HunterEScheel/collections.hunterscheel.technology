@@ -37,7 +37,7 @@ export function Home() {
         characters.
         <div className="mt-3">
           <Link
-            to="/builder"
+            to="/hexcraft/builder"
             className="inline-block rounded bg-amber-500 hover:bg-amber-400 px-3 py-1.5 font-medium text-zinc-950"
           >
             Try the builder anyway
@@ -58,7 +58,7 @@ export function Home() {
         <div className="rounded border border-zinc-800 bg-zinc-900/50 p-6 text-center">
           <p className="text-zinc-400">No characters yet.</p>
           <Link
-            to="/builder"
+            to="/hexcraft/builder"
             className="inline-block mt-3 rounded bg-amber-500 hover:bg-amber-400 px-3 py-1.5 font-medium text-zinc-950"
           >
             Create your first
@@ -85,13 +85,13 @@ export function Home() {
               </p>
               <div className="flex gap-2">
                 <Link
-                  to={`/sheet/${row.id}`}
+                  to={`/hexcraft/sheet/${row.id}`}
                   className="flex-1 text-center rounded bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-sm"
                 >
                   Sheet
                 </Link>
                 <Link
-                  to={`/builder/${row.id}`}
+                  to={`/hexcraft/builder/${row.id}`}
                   className="flex-1 text-center rounded bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-sm"
                 >
                   Edit

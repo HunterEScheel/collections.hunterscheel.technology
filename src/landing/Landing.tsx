@@ -20,13 +20,24 @@ export function Landing({ user }: { user: User }) {
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <CategoryCard
           to="/mtg"
           emoji="🃏"
           title="Cards"
           blurb="Search your Magic collection with Scryfall syntax, by binder, quantity and price."
           detail={counts.cards === null ? null : `${counts.cards.toLocaleString()} cards`}
+        />
+        <CategoryCard
+          to="/hexcraft"
+          emoji="🎲"
+          title="Hexcraft"
+          blurb="Build characters for the Hexcraft RPG, run the game, make monsters."
+          detail={
+            counts.characters === null
+              ? null
+              : `${counts.characters.toLocaleString()} character${counts.characters === 1 ? '' : 's'}`
+          }
         />
         <CategoryCard
           to="/kitchen"
@@ -82,21 +93,27 @@ function CategoryCard({
 
 /** Row counts for the two cards, fetched head-only so nothing large comes back. */
 function useCounts() {
-  const [counts, setCounts] = useState<{ cards: number | null; kitchen: number | null }>({
-    cards: null,
-    kitchen: null,
-  });
+  const [counts, setCounts] = useState<{
+    cards: number | null;
+    kitchen: number | null;
+    characters: number | null;
+  }>({ cards: null, kitchen: null, characters: null });
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const [cards, kitchen] = await Promise.all([
+      const [cards, kitchen, characters] = await Promise.all([
         supabase.from('collection_cards').select('id', { count: 'exact', head: true }),
         supabase.from('kitchen_items').select('id', { count: 'exact', head: true }),
+        supabase.from('hexcraft_characters').select('id', { count: 'exact', head: true }),
       ]);
       if (cancelled) return;
-      setCounts({ cards: cards.count ?? null, kitchen: kitchen.count ?? null });
+      setCounts({
+        cards: cards.count ?? null,
+        kitchen: kitchen.count ?? null,
+        characters: characters.count ?? null,
+      });
     }
 
     void load();
