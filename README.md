@@ -1,8 +1,8 @@
 # Collections
 
-Everything I own, searchable in one place: a Magic collection and a kitchen pantry,
-behind one login. Deployed at
-[collections.hunterscheel.technology](https://collections.hunterscheel.technology).
+Everything I own, searchable in one place: a Magic collection, a kitchen pantry and an
+RPG character builder, behind one login — plus the portfolio. Deployed at
+[jaeg.click](https://jaeg.click).
 
 Sign in at the root and pick a category:
 
@@ -90,7 +90,12 @@ survive a refresh or a pasted link.
 
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Vercel project's environment
 variables — they are read at build time, so a deploy without them serves a page that
-fails on load. Point the `collections` CNAME at Vercel and add the domain to the project.
+fails on load.
+
+Nothing in the app hardcodes its own domain: sign-in redirects are built from
+`window.location.origin`. Supabase does not take that on trust, though — when the
+domain changes, add the new origin under Authentication → URL Configuration (site URL
+and redirect allow-list), or magic links will bounce.
 
 ## Usage
 
