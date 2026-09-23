@@ -11,6 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.0.18",
+    "@fontsource/eb-garamond": "^5.0.18",
+    "@fontsource/jetbrains-mono": "^5.0.20",
+    "@fontsource/unifrakturcook": "^5.0.13",
     "@supabase/supabase-js": "^2.112.4",
     "papaparse": "^5.7.0",
     "react": "^19.2.8",

@@ -12,13 +12,23 @@ Sign in at the root and pick a category:
 | `/mtg` | Magic collection: Scryfall-syntax search over your binders |
 | `/kitchen` | Pantry, recipes and the shopping list |
 | `/hexcraft` | Hexcraft RPG: character builder, sheets, monsters, GM guide |
+| `/bio` | The portfolio — public, and a separate page from the app |
 
 ```
-.                 the React app (Vite + Tailwind + Supabase)
-├─ src/           /mtg lives at the top level; the gate and the other apps in their own folders
+.                 two pages built from one repo
+├─ index.html     the Collections app: signed in, Tailwind, one router
+├─ bio.html       the portfolio: public, its own CSS and fonts
+├─ src/           /mtg at the top level; the gate and the other apps in their own folders
 ├─ scripts/       one-off tooling (Hexcraft skill embeddings)
 └─ supabase/      migrations for all three — cards, kitchen_*, hexcraft_*
 ```
+
+`/bio` is deliberately a **second entry point** rather than a route inside the app. The
+portfolio brings 900 lines of its own CSS that restyle `*`, `html`, `body` and `a` to
+parchment and gold; sharing a page would mean scoping every one of those rules, or
+watching the card search turn into an illuminated manuscript. Two entries cost a page
+load when moving between them and remove the problem entirely — and it keeps the
+portfolio outside the sign-in gate, which is where a portfolio belongs.
 
 The kitchen lives on the web: the pantry, recipes that tell you what you are missing,
 and a shopping list built from both. A new kitchen can start from a set of common

@@ -54,6 +54,10 @@ export function Landing({ user }: { user: User }) {
 
       <footer className="flex items-center gap-3 text-xs text-zinc-500">
         <span>{user.email}</span>
+        {/* A plain anchor, not a Link: /bio is its own page, not a route in here. */}
+        <a href="/bio" className="hover:text-zinc-300">
+          Bio
+        </a>
         <button
           onClick={() => void supabase.auth.signOut()}
           className="rounded-md px-2 py-1 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:text-zinc-300"
