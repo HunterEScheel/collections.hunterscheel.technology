@@ -2,11 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { searchMagicItems } from './shop';
 
 /**
- * The shop's item search is built from one Open5e query per rarity. Four items —
- * spell scrolls, healing potions and the two giant-strength lines — carry rarity
- * "varies", so no rarity query returns them and they were silently unsearchable.
- * That meant no restock rule could be written for them, even though the restock
- * code has always known how to expand them.
+ * The shop's item search is built from one Open5e query per rarity. Items like
+ * spell scrolls, healing potions and the two giant-strength lines carry rarity
+ * "varies", so the ordinary rarity queries never returned them and they were
+ * silently unsearchable. That meant no restock rule could be written for them,
+ * even though the restock code has always known how to expand them. Search now
+ * sweeps "varies" as a rarity of its own and only falls back to fetching the
+ * known slugs one by one for whatever that sweep misses.
  */
 
 const RARITY_PAGE = {
@@ -70,5 +72,38 @@ describe('shop item search', () => {
     const results = await searchMagicItems('');
     const indexes = results.map((i) => i.index);
     expect(indexes).toEqual([...new Set(indexes)]);
+  });
+});
+
+describe('shop item search when the slugs are wrong', () => {
+  /**
+   * The slug list is a guess about Open5e's spelling, so the sweep has to carry
+   * the feature on its own: with every by-slug fetch 404ing, the varying items
+   * must still be searchable.
+   */
+  it('finds the varying items from the rarity sweep alone', async () => {
+    vi.resetModules();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (/\/magicitems\/[a-z-]+\/\?/.test(url)) return { ok: false, json: async () => ({}) };
+        if (url.includes('rarity=varies')) {
+          return {
+            ok: true,
+            json: async () => ({
+              next: null,
+              results: [
+                { slug: 'potion-of-healing', name: 'Potion of Healing', rarity: 'varies', desc: '' },
+              ],
+            }),
+          };
+        }
+        return { ok: true, json: async () => RARITY_PAGE };
+      }),
+    );
+
+    const { searchMagicItems: search } = await import('./shop');
+    const results = await search('potion of healing');
+    expect(results.map((i) => i.index)).toContain('potion-of-healing');
   });
 });

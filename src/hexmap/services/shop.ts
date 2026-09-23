@@ -301,18 +301,20 @@ let allItemsCache: MagicItemDetail[] | null = null;
 
 async function fetchAllMagicItems(): Promise<MagicItemDetail[]> {
   if (allItemsCache) return allItemsCache;
-  const rarities = ["common", "uncommon", "rare", "very rare", "legendary"];
+  // "varies" is a rarity like any other as far as the API is concerned, so ask
+  // for it alongside the rest. That is what makes a Potion of Healing or a
+  // Spell Scroll searchable at all: no rule could be written for one before,
+  // even though expandVariant() has always known how to stock it.
+  const rarities = ["common", "uncommon", "rare", "very rare", "legendary", "varies"];
   const batches = await Promise.all(rarities.map((r) => fetchItemsByRarity(r)));
 
   const byIndex = new Map<string, MagicItemDetail>();
   for (const item of batches.flat()) byIndex.set(item.index, item);
 
-  // The variant items carry rarity "varies" in Open5e, so none of the rarity
-  // queries above return them and they never became searchable — which meant no
-  // rule could be written for a Potion of Healing or a Spell Scroll, even though
-  // expandVariant() has always known how to stock them. Fetch them by slug from
-  // the same set the restock path uses, so the two cannot drift apart.
-  const variants = await Promise.all([...VARIANT_SLUGS].map(fetchItemBySlug));
+  // Belt and braces: fetch by slug any variant the "varies" sweep did not turn
+  // up, from the same set the restock path uses, so the two cannot drift apart.
+  const missing = [...VARIANT_SLUGS].filter((slug) => !byIndex.has(slug));
+  const variants = await Promise.all(missing.map(fetchItemBySlug));
   for (const variant of variants) {
     if (variant && !byIndex.has(variant.index)) byIndex.set(variant.index, variant);
   }
