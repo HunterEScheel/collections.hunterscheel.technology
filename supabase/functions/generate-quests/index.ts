@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Lock behind admin PIN so anonymous bots can't drain OpenAI credits.
+    // Lock behind admin PIN so anonymous bots can't drain xAI credits.
     const submittedPin = String(body?.pin ?? "");
     if (submittedPin !== adminPin) {
       return new Response(

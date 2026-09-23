@@ -14,12 +14,23 @@ rest of the site.
 Everything it owns is prefixed `hexmap_`, so it can share a project with the cards, the
 kitchen and Hexcraft. That prefix is why the move is not a straight copy.
 
-1. **Schema.** Run `supabase/migrations/hexmap_0001_init.sql`, then
-   `hexmap_0002_lockdown.sql`, in that order.
+1. **Schema.** Run `hexmap_0001_init.sql`, `hexmap_0002_lockdown.sql`, then
+   `hexmap_0003_schema_catchup.sql`, in that order.
 
-   The originals had `create table where not exists` on `hexes` and `quests` — not
-   valid SQL, and those two statements would have failed silently in a longer script.
-   Fixed here to `if not exists`.
+   Two things about the originals. They had `create table where not exists` on
+   `hexes` and `quests` — not valid SQL; fixed here to `if not exists`. And the
+   committed schema had drifted well behind the running database, which is what
+   `0003` exists to close:
+
+   | Missing | What |
+   |---|---|
+   | `characters`, `shop_purchases` | Two whole tables the app reads |
+   | `hexes.challenge_tier`, `.landmark`, `.landmark_name` | Two sat in the schema file as commented-out ALTERs; the third was never written down |
+   | `quests.end_hex_col`, `.end_hex_row`, `.scheduled_date`, `.completed_at`, `.found_items` | All read by `mapQuest()`; `scheduled_date` is also written by the `join_quest` RPC in 0002, which would have failed against the schema as committed |
+   | `create_quest_finding`, `purchase_equipment`, `save_character`, `set_quest_active` | Four RPCs the client calls |
+
+   `0003` is additive and idempotent, so it is equally safe on a fresh project or
+   against the live database.
 
 2. **Data.** Copy each table across into its prefixed name, for example:
 
@@ -40,14 +51,28 @@ kitchen and Hexcraft. That prefix is why the move is not a straight copy.
    Their secrets have to be set on the new project too — at minimum `ADMIN_PIN`, plus
    whatever the Discord and quest-generation functions read.
 
-4. **The four RPCs that are not in this repository.** The app calls
-   `hexmap_create_quest_finding`, `hexmap_purchase_equipment`, `hexmap_save_character`
-   and `hexmap_set_quest_active`, but only `join_quest`, `leave_quest`,
-   `purchase_shop_item`, `sell_purchase` and `dispose_purchase` were ever committed.
-   The other four exist only in the live project. Export them from there, rename each
-   to its `hexmap_` form, and create them alongside the rest — otherwise findings,
-   equipment purchases, character saves and quest activation will all fail at runtime
-   with "function not found".
+4. **Check the four reconstructed RPCs.** `0003` contains working versions of
+   `create_quest_finding`, `purchase_equipment`, `save_character` and
+   `set_quest_active`, but they were rebuilt from their call sites — the real
+   definitions exist only in the old project. `purchase_equipment` in particular
+   moves gold, so read it before trusting it. Dump the originals to compare:
+
+   ```sql
+   select p.proname, pg_get_functiondef(p.oid)
+   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and p.proname in ('create_quest_finding', 'purchase_equipment',
+                       'save_character', 'set_quest_active');
+   ```
+
+   Renaming them to their `hexmap_` form and using the originals is the safer path
+   if they differ.
+
+## Realtime
+
+The live-update subscriptions filter on table name (`table: "hexmap_quests"` and so
+on), so those names have to match the tables exactly — they are not routed through the
+`.from()` calls and will silently stop updating if the two drift apart.
 
 ## Shared session
 

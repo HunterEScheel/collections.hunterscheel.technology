@@ -43,7 +43,7 @@ export function useHexData(): Map<string, HexData> {
       .channel("hexes-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "hexes" },
+        { event: "*", schema: "public", table: "hexmap_hexes" },
         (payload) => {
           setHexes((prev) => {
             const next = new Map(prev);
@@ -104,7 +104,7 @@ export function useQuests(): Quest[] {
       .channel("quests-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "quests" },
+        { event: "*", schema: "public", table: "hexmap_quests" },
         (payload) => {
           setQuests((prev) => {
             if (payload.eventType === "DELETE") {
@@ -424,7 +424,7 @@ export function useInitiative(): InitiativeEntry[] {
       .channel("initiative-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "initiative_tracker" },
+        { event: "*", schema: "public", table: "hexmap_initiative_tracker" },
         (payload) => {
           setEntries((prev) => {
             let next: InitiativeEntry[];
@@ -526,7 +526,7 @@ export function useCharacters(): Map<string, Character> {
       .channel("characters-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "characters" },
+        { event: "*", schema: "public", table: "hexmap_characters" },
         (payload) => {
           setCharacters((prev) => {
             const next = new Map(prev);
@@ -602,7 +602,7 @@ export function useQuestFindings(): QuestFinding[] {
       .channel("quest-findings-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "quest_findings" },
+        { event: "*", schema: "public", table: "hexmap_quest_findings" },
         (payload) => {
           setFindings((prev) => {
             if (payload.eventType === "DELETE") {
@@ -661,7 +661,7 @@ export async function deleteQuestFinding(id: string): Promise<void> {
 /**
  * Generate quest suggestions from a completed quest's findings.
  * Sends the quest, its findings, and the world state to the
- * `generate-quests` Edge Function which calls OpenAI server-side.
+ * `generate-quests` Edge Function, which calls xAI server-side.
  */
 export async function generateQuestsFromQuest(
   pin: string,
