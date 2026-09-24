@@ -1,28 +1,29 @@
 # Collections
 
-Everything I own, searchable in one place: a Magic collection, a kitchen pantry and an
-RPG character builder, behind one login — plus the portfolio. Deployed at
-[jaeg.click](https://jaeg.click).
+My portfolio, and the apps it shows off: a Magic collection, a kitchen pantry and an
+RPG character builder behind one login, plus a campaign companion and a fireworks
+pledge tracker that are open to anyone. Deployed at [jaeg.click](https://jaeg.click).
 
-Sign in at the root and pick a category:
+The root is the public portfolio; the signed-in apps ask for sign-in when opened, and
+return you to the app you picked once you have:
 
 | Route | What it is |
 | --- | --- |
-| `/` | The gate — sign in, then choose which collection to search |
+| `/` | My Portfolio — public; a card for each app below, and a link to the bio |
 | `/mtg` | Magic collection: Scryfall-syntax search over your binders |
 | `/kitchen` | Pantry, recipes and the shopping list |
 | `/hexcraft` | Hexcraft RPG: character builder, sheets, monsters, GM guide |
-| `/bio` | The portfolio — public, and a separate page from the app |
+| `/bio` | The bio and résumé — public, and a separate page from the app |
 | `/hexmap` | Guild Hexmap: the campaign companion — public, also its own page |
 | `/fireworks` | Firework Fund: pledges toward the fireworks show and its receipts — public, its own page |
 
 ```
 .                   four pages built from one repo
-├─ index.html       the Collections app: signed in, Tailwind, one router
-├─ bio.html         the portfolio: public, its own CSS and fonts
+├─ index.html       the portfolio and the signed-in apps: Tailwind, one router
+├─ bio.html         the bio: public, its own CSS and fonts
 ├─ hexmap.html      the campaign companion: public, its own CSS
 ├─ fireworks.html   the fireworks pledge tracker: public, its own CSS and router
-├─ src/             /mtg at the top level; the gate and the other apps in their own folders
+├─ src/             /mtg at the top level; the portfolio, the gate and the other apps in their own folders
 ├─ scripts/         one-off tooling (Hexcraft skill embeddings)
 └─ supabase/        migrations and Edge Functions — cards, kitchen_*, hexcraft_*, hexmap_*, fireworks_*
 ```
@@ -33,7 +34,7 @@ than routes inside the app. Each brings its own CSS that restyles `:root`, `html
 card search turn into an illuminated manuscript. Separate entries cost a page load
 when moving between them and remove the problem entirely.
 
-It also keeps them outside the sign-in gate, which is where they belong: a portfolio is
+It also keeps them outside the sign-in gate, which is where they belong: a bio is
 for anyone, Hexmap's players identify by name with a PIN for admin rather than
 holding accounts, and Firework Fund's contributors unlock an event with its passcode.
 See `docs/hexmap.md` for what its move to the shared project needs — including four
