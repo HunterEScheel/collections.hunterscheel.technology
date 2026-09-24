@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useEventSession } from '../lib/eventSession'
+import { useOrganizer } from '../lib/organizer'
 import { fireworkLabel, formatMoney } from '../lib/types'
 import type { Contribution, Purchase } from '../lib/types'
 import { PasscodeGate } from '../components/PasscodeGate'
@@ -18,21 +19,15 @@ function ReceiptsContent() {
   const { session, lock } = useEventSession()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [pledged, setPledged] = useState(0)
-  const [isAdmin, setIsAdmin] = useState(false)
+  // Organizers (signed in via /admin) can record purchases right here.
+  const { isAdmin } = useOrganizer()
   const secret = session!.secret
   const eventId = session!.event.id
 
-  // Admins (signed in via /admin) can record purchases right here.
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setIsAdmin(Boolean(data.session)))
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => setIsAdmin(Boolean(s)))
-    return () => sub.subscription.unsubscribe()
-  }, [])
-
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([
-      supabase.rpc('get_purchases', { p_secret: secret }),
-      supabase.rpc('get_contributions', { p_secret: secret }),
+      supabase.rpc('fireworks_get_purchases', { p_secret: secret }),
+      supabase.rpc('fireworks_get_contributions', { p_secret: secret }),
     ])
     if (p.error?.message.includes('INVALID_SECRET') || c.error?.message.includes('INVALID_SECRET'))
       return lock()

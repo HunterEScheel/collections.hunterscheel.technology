@@ -32,7 +32,7 @@ export function AddPurchaseForm({ eventId, onAdded }: Props) {
     if (!Number.isInteger(parsedQty) || parsedQty <= 0) return setError('Enter a valid quantity.')
 
     setSubmitting(true)
-    const { error: err } = await supabase.from('purchases').insert({
+    const { error: err } = await supabase.from('fireworks_purchases').insert({
       event_id: eventId,
       item_name: itemName.trim(),
       firework_type: fireworkType || null,

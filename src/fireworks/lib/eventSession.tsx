@@ -36,7 +36,7 @@ export function EventSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<EventSession | null>(readStored)
 
   const unlock = useCallback(async (secret: string, name: string): Promise<string | null> => {
-    const { data, error } = await supabase.rpc('get_event_by_secret', { p_secret: secret })
+    const { data, error } = await supabase.rpc('fireworks_get_event_by_secret', { p_secret: secret })
     if (error) return `Something went wrong: ${error.message}`
     const rows = (data ?? []) as PublicEvent[]
     if (rows.length === 0) return 'Wrong passcode — check with the event organizer.'

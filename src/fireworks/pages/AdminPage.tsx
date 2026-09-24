@@ -1,27 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { useOrganizer } from '../lib/organizer'
 import { fireworkLabel, formatMoney } from '../lib/types'
 import type { AdminEvent, Contribution, Purchase } from '../lib/types'
 import { LoginForm } from '../components/LoginForm'
 
 export function AdminPage() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [authReady, setAuthReady] = useState(false)
+  const { ready, session, isAdmin } = useOrganizer()
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setAuthReady(true)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => setSession(s))
-    return () => sub.subscription.unsubscribe()
-  }, [])
-
-  if (!authReady) return <p className="muted">Loading…</p>
+  if (!ready) return <p className="muted">Loading…</p>
   if (!session) return <LoginForm />
+  if (!isAdmin) return <NotAnOrganizer email={session.user.email ?? ''} />
   return <AdminDashboard email={session.user.email ?? ''} />
+}
+
+function NotAnOrganizer({ email }: { email: string }) {
+  return (
+    <div className="card login-form">
+      <h3>Not an organizer</h3>
+      <p className="muted">
+        {email || 'This account'} is signed in but isn&apos;t on the organizer list. Ask the
+        site owner to add you, or sign in with another account.
+      </p>
+      <button className="secondary" onClick={() => supabase.auth.signOut()}>
+        Sign out
+      </button>
+    </div>
+  )
 }
 
 function AdminDashboard({ email }: { email: string }) {
@@ -30,7 +36,7 @@ function AdminDashboard({ email }: { email: string }) {
 
   const loadEvents = useCallback(async () => {
     const { data, error: err } = await supabase
-      .from('events')
+      .from('fireworks_events')
       .select('*')
       .order('event_date', { ascending: true, nullsFirst: false })
     if (err) setError(err.message)
@@ -44,7 +50,7 @@ function AdminDashboard({ email }: { email: string }) {
   async function deleteEvent(ev: AdminEvent) {
     if (!confirm(`Delete "${ev.name}" and ALL of its contributions and purchases? This cannot be undone.`))
       return
-    const { error: err } = await supabase.from('events').delete().eq('id', ev.id)
+    const { error: err } = await supabase.from('fireworks_events').delete().eq('id', ev.id)
     if (err) setError(err.message)
     else loadEvents()
   }
@@ -106,8 +112,8 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
 
   const load = useCallback(async () => {
     const [c, p] = await Promise.all([
-      supabase.from('contributions').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
-      supabase.from('purchases').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
+      supabase.from('fireworks_contributions').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
+      supabase.from('fireworks_purchases').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
     ])
     if (c.error || p.error) return setError((c.error ?? p.error)!.message)
     setError(null)
@@ -119,7 +125,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
     load()
   }, [load])
 
-  async function deleteRow(table: 'contributions' | 'purchases', id: string) {
+  async function deleteRow(table: 'fireworks_contributions' | 'fireworks_purchases', id: string) {
     const { error: err } = await supabase.from(table).delete().eq('id', id)
     if (err) setError(err.message)
     else load()
@@ -152,7 +158,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
                 <li key={c.id}>
                   <strong>{c.contributor_name}</strong> — {formatMoney(Number(c.amount))}
                   <span className="muted"> · {fireworkLabel(c.firework_type, c.firework_other)}</span>
-                  <button className="row-del" onClick={() => deleteRow('contributions', c.id)}>
+                  <button className="row-del" onClick={() => deleteRow('fireworks_contributions', c.id)}>
                     Delete
                   </button>
                 </li>
@@ -170,7 +176,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
                 <li key={p.id}>
                   <strong>{p.item_name}</strong> — {p.quantity} × {formatMoney(Number(p.cost))}
                   {p.firework_type && <span className="muted"> · {fireworkLabel(p.firework_type)}</span>}
-                  <button className="row-del" onClick={() => deleteRow('purchases', p.id)}>
+                  <button className="row-del" onClick={() => deleteRow('fireworks_purchases', p.id)}>
                     Delete
                   </button>
                 </li>
@@ -195,7 +201,7 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error: err } = await supabase.from('events').insert({
+    const { error: err } = await supabase.from('fireworks_events').insert({
       name: name.trim(),
       event_date: date || null,
       description: description.trim() || null,

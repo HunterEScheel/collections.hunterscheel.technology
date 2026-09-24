@@ -20,7 +20,7 @@ function ContributeContent() {
   const secret = session!.secret
 
   const loadContributions = useCallback(async () => {
-    const { data, error } = await supabase.rpc('get_contributions', { p_secret: secret })
+    const { data, error } = await supabase.rpc('fireworks_get_contributions', { p_secret: secret })
     if (error?.message.includes('INVALID_SECRET')) return lock()
     setContributions((data ?? []) as Contribution[])
   }, [secret, lock])

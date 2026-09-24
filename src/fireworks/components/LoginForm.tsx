@@ -2,9 +2,12 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 
+// The shared project signs people in by magic link (no passwords), so organizers
+// do too. Signing in only proves who you are; fireworks_admins decides whether
+// that makes you an organizer.
 export function LoginForm() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -12,15 +15,28 @@ export function LoginForm() {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/fireworks/admin` },
+    })
     setSubmitting(false)
     if (authError) setError(authError.message)
-    // On success, onAuthStateChange in AdminPage re-renders the page.
+    else setSent(true)
+    // Following the link lands back here; onAuthStateChange re-renders the page.
+  }
+
+  if (sent) {
+    return (
+      <div className="card login-form">
+        <h3>Check your email</h3>
+        <p className="muted">We sent a sign-in link to {email}.</p>
+      </div>
+    )
   }
 
   return (
     <form className="card form login-form" onSubmit={handleSubmit}>
-      <h3>Admin sign in</h3>
+      <h3>Organizer sign in</h3>
       <label>
         Email
         <input
@@ -31,19 +47,9 @@ export function LoginForm() {
           required
         />
       </label>
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </label>
       {error && <p className="error">{error}</p>}
       <button type="submit" disabled={submitting}>
-        {submitting ? 'Signing in…' : 'Sign in'}
+        {submitting ? 'Sending…' : 'Email me a sign-in link'}
       </button>
     </form>
   )

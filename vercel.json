@@ -13,6 +13,14 @@
       "destination": "/hexmap.html"
     },
     {
+      "source": "/fireworks",
+      "destination": "/fireworks.html"
+    },
+    {
+      "source": "/fireworks/(.*)",
+      "destination": "/fireworks.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

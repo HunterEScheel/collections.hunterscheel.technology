@@ -36,7 +36,8 @@ jobs:
           # the next time a button is reworded.
           if ! grep -q "collection_cards" dist/assets/*.js \
             || ! grep -q "kitchen_items" dist/assets/*.js \
-            || ! grep -q "hexcraft_characters" dist/assets/*.js; then
+            || ! grep -q "hexcraft_characters" dist/assets/*.js \
+            || ! grep -q "fireworks_events" dist/assets/*.js; then
             echo "The bundle has no application code in it." >&2
             exit 1
           fi

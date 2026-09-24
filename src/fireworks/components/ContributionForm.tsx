@@ -31,7 +31,7 @@ export function ContributionForm({ secret, contributorName, onSubmitted, onInval
       return setError('Please describe the firework you want.')
 
     setSubmitting(true)
-    const { error: rpcError } = await supabase.rpc('submit_contribution', {
+    const { error: rpcError } = await supabase.rpc('fireworks_submit_contribution', {
       p_secret: secret,
       p_name: contributorName,
       p_amount: parsedAmount,

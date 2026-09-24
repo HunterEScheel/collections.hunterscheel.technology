@@ -14,27 +14,30 @@ Sign in at the root and pick a category:
 | `/hexcraft` | Hexcraft RPG: character builder, sheets, monsters, GM guide |
 | `/bio` | The portfolio — public, and a separate page from the app |
 | `/hexmap` | Guild Hexmap: the campaign companion — public, also its own page |
+| `/fireworks` | Firework Fund: pledges toward the fireworks show and its receipts — public, its own page |
 
 ```
-.                 two pages built from one repo
-├─ index.html     the Collections app: signed in, Tailwind, one router
-├─ bio.html       the portfolio: public, its own CSS and fonts
-├─ hexmap.html    the campaign companion: public, its own CSS
-├─ src/           /mtg at the top level; the gate and the other apps in their own folders
-├─ scripts/       one-off tooling (Hexcraft skill embeddings)
-└─ supabase/      migrations and Edge Functions — cards, kitchen_*, hexcraft_*, hexmap_*
+.                   four pages built from one repo
+├─ index.html       the Collections app: signed in, Tailwind, one router
+├─ bio.html         the portfolio: public, its own CSS and fonts
+├─ hexmap.html      the campaign companion: public, its own CSS
+├─ fireworks.html   the fireworks pledge tracker: public, its own CSS and router
+├─ src/             /mtg at the top level; the gate and the other apps in their own folders
+├─ scripts/         one-off tooling (Hexcraft skill embeddings)
+└─ supabase/        migrations and Edge Functions — cards, kitchen_*, hexcraft_*, hexmap_*, fireworks_*
 ```
 
-`/bio` and `/hexmap` are deliberately **separate entry points** rather than routes
-inside the app. Each brings a thousand-odd lines of its own CSS that restyle `*`,
-`html` and `body`; sharing a page would mean scoping every one of those rules, or
-watching the card search turn into an illuminated manuscript. Separate entries cost a
-page load when moving between them and remove the problem entirely.
+`/bio`, `/hexmap` and `/fireworks` are deliberately **separate entry points** rather
+than routes inside the app. Each brings its own CSS that restyles `:root`, `html` and
+`body`; sharing a page would mean scoping every one of those rules, or watching the
+card search turn into an illuminated manuscript. Separate entries cost a page load
+when moving between them and remove the problem entirely.
 
-It also keeps both outside the sign-in gate, which is where they belong: a portfolio is
-for anyone, and Hexmap's players identify by name with a PIN for admin rather than
-holding accounts. See `docs/hexmap.md` for what its move to the shared project needs —
-including four RPCs that live only in the old project.
+It also keeps them outside the sign-in gate, which is where they belong: a portfolio is
+for anyone, Hexmap's players identify by name with a PIN for admin rather than
+holding accounts, and Firework Fund's contributors unlock an event with its passcode.
+See `docs/hexmap.md` for what its move to the shared project needs — including four
+RPCs that live only in the old project — and `docs/fireworks.md` for Firework Fund's.
 
 The kitchen lives on the web: the pantry, recipes that tell you what you are missing,
 and a shopping list built from both. A new kitchen can start from a set of common
@@ -70,7 +73,8 @@ the exit code.
    ```
 
    (or paste the files in `supabase/migrations/` into the SQL editor — the `0001…`
-   series is the card collection, `kitchen_*` the pantry, `hexcraft_*` the RPG)
+   series is the card collection, `kitchen_*` the pantry, `hexcraft_*` the RPG,
+   `hexmap_*` the campaign companion, `fireworks_*` the pledge tracker)
 
 2. Enable email (magic link) auth in the Supabase dashboard under Authentication → Providers.
 

@@ -61,6 +61,9 @@ export function Landing({ user }: { user: User }) {
         <a href="/hexmap" className="hover:text-zinc-300">
           Hexmap
         </a>
+        <a href="/fireworks" className="hover:text-zinc-300">
+          Fireworks
+        </a>
         <button
           onClick={() => void supabase.auth.signOut()}
           className="rounded-md px-2 py-1 ring-1 ring-zinc-800 hover:bg-zinc-800 hover:text-zinc-300"
