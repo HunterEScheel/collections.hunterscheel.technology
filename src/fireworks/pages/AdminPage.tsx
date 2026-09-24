@@ -1,47 +1,29 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { supabase } from '../lib/supabase'
-import { useOrganizer } from '../lib/organizer'
+import { callAdminAction, useAdmin } from '../lib/admin'
 import { fireworkLabel, formatMoney } from '../lib/types'
 import type { AdminEvent, Contribution, Purchase } from '../lib/types'
-import { LoginForm } from '../components/LoginForm'
+import { PinForm } from '../components/PinForm'
 
 export function AdminPage() {
-  const { ready, session, isAdmin } = useOrganizer()
-
-  if (!ready) return <p className="muted">Loading…</p>
-  if (!session) return <LoginForm />
-  if (!isAdmin) return <NotAnOrganizer email={session.user.email ?? ''} />
-  return <AdminDashboard email={session.user.email ?? ''} />
+  const { pin } = useAdmin()
+  if (!pin) return <PinForm />
+  return <AdminDashboard pin={pin} />
 }
 
-function NotAnOrganizer({ email }: { email: string }) {
-  return (
-    <div className="card login-form">
-      <h3>Not an organizer</h3>
-      <p className="muted">
-        {email || 'This account'} is signed in but isn&apos;t on the organizer list. Ask the
-        site owner to add you, or sign in with another account.
-      </p>
-      <button className="secondary" onClick={() => supabase.auth.signOut()}>
-        Sign out
-      </button>
-    </div>
-  )
-}
-
-function AdminDashboard({ email }: { email: string }) {
+function AdminDashboard({ pin }: { pin: string }) {
+  const { logout } = useAdmin()
   const [events, setEvents] = useState<AdminEvent[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const loadEvents = useCallback(async () => {
-    const { data, error: err } = await supabase
-      .from('fireworks_events')
-      .select('*')
-      .order('event_date', { ascending: true, nullsFirst: false })
-    if (err) setError(err.message)
-    else setEvents((data ?? []) as AdminEvent[])
-  }, [])
+    try {
+      const { events } = await callAdminAction<{ events: AdminEvent[] }>(pin, 'fireworks_list_events')
+      setEvents(events)
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }, [pin])
 
   useEffect(() => {
     loadEvents()
@@ -50,24 +32,27 @@ function AdminDashboard({ email }: { email: string }) {
   async function deleteEvent(ev: AdminEvent) {
     if (!confirm(`Delete "${ev.name}" and ALL of its contributions and purchases? This cannot be undone.`))
       return
-    const { error: err } = await supabase.from('fireworks_events').delete().eq('id', ev.id)
-    if (err) setError(err.message)
-    else loadEvents()
+    try {
+      await callAdminAction(pin, 'fireworks_delete_event', { id: ev.id })
+      loadEvents()
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   return (
     <div className="page">
       <div className="admin-bar">
-        <span className="muted">Signed in as {email}</span>
-        <button className="secondary" onClick={() => supabase.auth.signOut()}>
-          Sign out
+        <span className="muted">Admin unlocked</span>
+        <button className="secondary" onClick={logout}>
+          Lock
         </button>
       </div>
 
       {error && <p className="error">{error}</p>}
 
       <div className="columns">
-        <CreateEventForm onCreated={loadEvents} />
+        <CreateEventForm pin={pin} onCreated={loadEvents} />
         <div className="card">
           <h3>Events</h3>
           {events.length === 0 ? (
@@ -90,7 +75,7 @@ function AdminDashboard({ email }: { email: string }) {
         </div>
       </div>
 
-      {events.length > 0 && <ManageEventData events={events} />}
+      {events.length > 0 && <ManageEventData pin={pin} events={events} />}
       <p className="muted">
         To record purchases, unlock the event on the Receipts page while signed in — the
         add-purchase form appears there.
@@ -99,7 +84,7 @@ function AdminDashboard({ email }: { email: string }) {
   )
 }
 
-function ManageEventData({ events }: { events: AdminEvent[] }) {
+function ManageEventData({ pin, events }: { pin: string; events: AdminEvent[] }) {
   const [eventId, setEventId] = useState(events[0].id)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [purchases, setPurchases] = useState<Purchase[]>([])
@@ -111,24 +96,31 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
   }, [events, eventId])
 
   const load = useCallback(async () => {
-    const [c, p] = await Promise.all([
-      supabase.from('fireworks_contributions').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
-      supabase.from('fireworks_purchases').select('*').eq('event_id', eventId).order('created_at', { ascending: false }),
-    ])
-    if (c.error || p.error) return setError((c.error ?? p.error)!.message)
-    setError(null)
-    setContributions((c.data ?? []) as Contribution[])
-    setPurchases((p.data ?? []) as Purchase[])
-  }, [eventId])
+    try {
+      const data = await callAdminAction<{ contributions: Contribution[]; purchases: Purchase[] }>(
+        pin,
+        'fireworks_list_event_data',
+        { eventId },
+      )
+      setError(null)
+      setContributions(data.contributions)
+      setPurchases(data.purchases)
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }, [pin, eventId])
 
   useEffect(() => {
     load()
   }, [load])
 
-  async function deleteRow(table: 'fireworks_contributions' | 'fireworks_purchases', id: string) {
-    const { error: err } = await supabase.from(table).delete().eq('id', id)
-    if (err) setError(err.message)
-    else load()
+  async function deleteRow(kind: 'contribution' | 'purchase', id: string) {
+    try {
+      await callAdminAction(pin, `fireworks_delete_${kind}`, { id })
+      load()
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   return (
@@ -158,7 +150,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
                 <li key={c.id}>
                   <strong>{c.contributor_name}</strong> — {formatMoney(Number(c.amount))}
                   <span className="muted"> · {fireworkLabel(c.firework_type, c.firework_other)}</span>
-                  <button className="row-del" onClick={() => deleteRow('fireworks_contributions', c.id)}>
+                  <button className="row-del" onClick={() => deleteRow('contribution', c.id)}>
                     Delete
                   </button>
                 </li>
@@ -176,7 +168,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
                 <li key={p.id}>
                   <strong>{p.item_name}</strong> — {p.quantity} × {formatMoney(Number(p.cost))}
                   {p.firework_type && <span className="muted"> · {fireworkLabel(p.firework_type)}</span>}
-                  <button className="row-del" onClick={() => deleteRow('fireworks_purchases', p.id)}>
+                  <button className="row-del" onClick={() => deleteRow('purchase', p.id)}>
                     Delete
                   </button>
                 </li>
@@ -189,7 +181,7 @@ function ManageEventData({ events }: { events: AdminEvent[] }) {
   )
 }
 
-function CreateEventForm({ onCreated }: { onCreated: () => void }) {
+function CreateEventForm({ pin, onCreated }: { pin: string; onCreated: () => void }) {
   const [name, setName] = useState('')
   const [date, setDate] = useState('')
   const [description, setDescription] = useState('')
@@ -201,14 +193,18 @@ function CreateEventForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error: err } = await supabase.from('fireworks_events').insert({
-      name: name.trim(),
-      event_date: date || null,
-      description: description.trim() || null,
-      secret,
-    })
+    try {
+      await callAdminAction(pin, 'fireworks_create_event', {
+        name: name.trim(),
+        eventDate: date || null,
+        description: description.trim() || null,
+        secret,
+      })
+    } catch (err) {
+      setSubmitting(false)
+      return setError((err as Error).message)
+    }
     setSubmitting(false)
-    if (err) return setError(err.message)
     setName('')
     setDate('')
     setDescription('')

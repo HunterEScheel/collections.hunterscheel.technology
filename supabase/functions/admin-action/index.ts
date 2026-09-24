@@ -1,7 +1,8 @@
 // Supabase Edge Function: admin-action
 //
-// Server-side admin authentication and write gate. The browser never holds
-// write access to the hexes table directly; instead it sends an admin PIN
+// Server-side admin authentication and write gate for the hexmap and Firework
+// Fund. The browser never holds write access to their admin tables directly;
+// instead it sends an admin PIN
 // here, this function verifies it against the ADMIN_PIN secret, and on
 // success performs the write using the service-role key (which bypasses
 // RLS).
@@ -70,6 +71,16 @@ const VALID_QUEST_STATUSES = [
   "in_progress",
   "completed",
   "paid_out",
+];
+
+// Mirrors the fireworks_type enum.
+const VALID_FIREWORK_TYPES = [
+  "mortars",
+  "comets",
+  "parachutes",
+  "fountain",
+  "other",
+  "buyers_choice",
 ];
 
 // Payout multipliers an admin may apply to a quest's gp reward.
@@ -608,6 +619,111 @@ Deno.serve(async (req) => {
           .from("hexmap_shop_restock_settings")
           .update({ count })
           .eq("rarity", rarity);
+        if (error) return serverError(error.message);
+        return ok();
+      }
+
+      // -------- Firework Fund --------
+      // Same PIN as the hexmap: the fireworks_ tables have RLS on and no
+      // policies, so these are the only way anything but the passcode RPCs
+      // reaches them.
+      case "fireworks_list_events": {
+        const { data, error } = await supa
+          .from("fireworks_events")
+          .select("*")
+          .order("event_date", { ascending: true, nullsFirst: false });
+        if (error) return serverError(error.message);
+        return ok({ events: data ?? [] });
+      }
+
+      case "fireworks_create_event": {
+        const name = String(payload.name ?? "").trim().slice(0, 200);
+        const secret = String(payload.secret ?? "").trim().slice(0, 200);
+        if (!name) return badRequest("name required");
+        if (!secret) return badRequest("secret required");
+        const description = String(payload.description ?? "").trim();
+        const eventDate = payload.eventDate ? String(payload.eventDate) : null;
+        const { error } = await supa.from("fireworks_events").insert({
+          name,
+          secret,
+          description: description || null,
+          event_date: eventDate,
+        });
+        if (error) {
+          return error.code === "23505"
+            ? badRequest("Another event already uses that secret.")
+            : serverError(error.message);
+        }
+        return ok();
+      }
+
+      case "fireworks_delete_event": {
+        const id = String(payload.id ?? "");
+        if (!id) return badRequest("event id required");
+        const { error } = await supa.from("fireworks_events").delete().eq("id", id);
+        if (error) return serverError(error.message);
+        return ok();
+      }
+
+      case "fireworks_list_event_data": {
+        const eventId = String(payload.eventId ?? "");
+        if (!eventId) return badRequest("eventId required");
+        const [c, p] = await Promise.all([
+          supa
+            .from("fireworks_contributions")
+            .select("*")
+            .eq("event_id", eventId)
+            .order("created_at", { ascending: false }),
+          supa
+            .from("fireworks_purchases")
+            .select("*")
+            .eq("event_id", eventId)
+            .order("created_at", { ascending: false }),
+        ]);
+        if (c.error || p.error) return serverError((c.error ?? p.error).message);
+        return ok({ contributions: c.data ?? [], purchases: p.data ?? [] });
+      }
+
+      case "fireworks_delete_contribution":
+      case "fireworks_delete_purchase": {
+        const id = String(payload.id ?? "");
+        if (!id) return badRequest("id required");
+        const table =
+          action === "fireworks_delete_contribution"
+            ? "fireworks_contributions"
+            : "fireworks_purchases";
+        const { error } = await supa.from(table).delete().eq("id", id);
+        if (error) return serverError(error.message);
+        return ok();
+      }
+
+      case "fireworks_add_purchase": {
+        const eventId = String(payload.eventId ?? "");
+        const itemName = String(payload.itemName ?? "").trim().slice(0, 200);
+        const cost = Number(payload.cost);
+        const quantity = Number(payload.quantity);
+        const type =
+          payload.fireworkType == null || payload.fireworkType === ""
+            ? null
+            : String(payload.fireworkType);
+        if (!eventId) return badRequest("eventId required");
+        if (!itemName) return badRequest("item name required");
+        if (!Number.isFinite(cost) || cost < 0) return badRequest("invalid cost");
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+          return badRequest("invalid quantity");
+        }
+        if (type != null && !VALID_FIREWORK_TYPES.includes(type)) {
+          return badRequest("invalid firework type");
+        }
+        const notes = String(payload.notes ?? "").trim();
+        const { error } = await supa.from("fireworks_purchases").insert({
+          event_id: eventId,
+          item_name: itemName,
+          firework_type: type,
+          cost,
+          quantity,
+          notes: notes || null,
+        });
         if (error) return serverError(error.message);
         return ok();
       }

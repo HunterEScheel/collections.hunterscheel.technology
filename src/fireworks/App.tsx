@@ -1,4 +1,5 @@
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom'
+import { AdminProvider } from './lib/admin'
 import { EventSessionProvider } from './lib/eventSession'
 import { ContributePage } from './pages/ContributePage'
 import { ReceiptsPage } from './pages/ReceiptsPage'
@@ -19,13 +20,15 @@ export default function App() {
         </nav>
       </header>
       <main>
-        <EventSessionProvider>
-          <Routes>
-            <Route path="/" element={<ContributePage />} />
-            <Route path="/receipts" element={<ReceiptsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </EventSessionProvider>
+        <AdminProvider>
+          <EventSessionProvider>
+            <Routes>
+              <Route path="/" element={<ContributePage />} />
+              <Route path="/receipts" element={<ReceiptsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Routes>
+          </EventSessionProvider>
+        </AdminProvider>
       </main>
     </BrowserRouter>
   )

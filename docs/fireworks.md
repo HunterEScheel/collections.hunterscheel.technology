@@ -20,34 +20,26 @@ for the browser session.
   firework request (mortars, comets, parachutes, fountain, other, or buyer's choice —
   the default). Shows the running total and all contributions for the event.
 - **Receipts (`/fireworks/receipts`)** — after unlocking: fireworks the organizer
-  actually purchased, with pledged vs. spent totals. Organizers also get the
-  add-purchase form here.
-- **Admin (`/fireworks/admin`)** — organizer sign-in. Create and delete events, delete
+  actually purchased, with pledged vs. spent totals. Once the admin PIN has been
+  entered, the add-purchase form appears here too.
+- **Admin (`/fireworks/admin`)** — the admin PIN. Create and delete events, delete
   contributions and purchases.
 
-## Organizers
+## Admin
 
-Signing in is by magic link, like the rest of the site — and the session is shared with
-the rest of the site, so being signed in is **not** what makes someone an organizer.
-The `fireworks_admins` allowlist is: every table policy asks `fireworks_is_admin()`,
-and the client asks the same function to decide whether to show the admin screens.
-(In the old project the policies allowed any `authenticated` user, which was safe only
-because public sign-ups were off. Here anyone can sign in with a magic link, GitHub or
-Discord.)
+Admin is the hexmap's: the same PIN, checked by the same `admin-action` Edge Function
+against the same `ADMIN_PIN` secret. The `fireworks_` tables have RLS on and **no
+policies**, so neither anonymous visitors nor anyone signed in to the rest of the site
+can read or write them directly; the admin screens send the PIN with each request, and
+the function does the work with the service-role key (`fireworks_*` actions in
+`supabase/functions/admin-action/index.ts`).
 
-To make someone an organizer, have them sign in once, then in the SQL editor:
+The PIN lives in memory for as long as the page is open, and is shared between the
+Admin and Receipts pages. A refresh drops it; changing `ADMIN_PIN` locks out every admin
+of both apps at once.
 
-```sql
-insert into public.fireworks_admins (user_id)
-select id from auth.users where email = 'organizer@example.com';
-```
-
-Remove them with the matching `delete`. The client can neither read nor change the
-table.
-
-Add `https://jaeg.click/fireworks/admin` (and `http://localhost:5173/fireworks/admin`
-for development) to Authentication → URL Configuration → Redirect URLs, or the magic
-link will land on the site root instead — still signed in, just one click further away.
+(The old project instead allowed any `authenticated` user, which was safe only because
+public sign-ups were off. Here anyone can sign in with a magic link, GitHub or Discord.)
 
 ## How the event passcode works
 
@@ -72,7 +64,7 @@ and Hexmap.
 
 1. **Schema.** Run `supabase/migrations/fireworks_0001_init.sql`. It is the old
    `schema.sql` — which already folded in `migrate-001` to `migrate-004` — with the
-   prefix, the `fireworks_admins` allowlist and the policies rewritten to use it. The
+   prefix and without the admin policies (admin goes through `admin-action`). The
    old files are in the history under `fireworks-import/supabase/`.
 
 2. **Data.** Copy the three tables across, parents first. From the old project:
@@ -82,25 +74,30 @@ and Hexmap.
      -t public.events -t public.contributions -t public.purchases > fireworks-data.sql
    ```
 
-   Rename the tables in the file (`public.events` → `public.fireworks_events`, and so
-   on) and make sure the `events` inserts come before the other two. `created_by` points
-   at the old project's `auth.users`, which the new project does not have — blank it
-   before loading:
+   Rename the tables in the file and make sure the `events` inserts come before the
+   other two:
 
    ```sh
    sed -i -E 's/INSERT INTO public\.(events|contributions|purchases) /INSERT INTO public.fireworks_\1 /' fireworks-data.sql
    ```
 
-   then replace each `created_by` uuid in the `fireworks_events` inserts with `NULL`
-   (or with your own id in the new project), and run the file in the new project's
-   SQL editor or with `psql "$NEW_DB_URL" -f fireworks-data.sql`.
+   The old `events.created_by` column is gone — nobody signs in any more — so give it
+   somewhere to land while loading, then drop it:
+
+   ```sql
+   alter table public.fireworks_events add column created_by uuid;
+   -- run fireworks-data.sql here (SQL editor, or psql "$NEW_DB_URL" -f fireworks-data.sql)
+   alter table public.fireworks_events drop column created_by;
+   ```
 
    (Or export each table to CSV from the old dashboard and import into the prefixed
-   table through the new one, leaving `created_by` empty.)
+   table through the new one, leaving out `created_by`.)
 
    The enum values are unchanged, so `firework_type` columns load as they are.
 
-3. **Organizers.** Add yourself to `fireworks_admins` as above, and the redirect URLs.
+3. **Redeploy `admin-action`** so it has the `fireworks_*` actions:
+   `supabase functions deploy admin-action --no-verify-jwt`. `ADMIN_PIN` is already set
+   for the hexmap.
 
 4. **Retire the old deploy** once `/fireworks` shows the old events: the old Vercel
    project and Supabase project are untouched by any of this.

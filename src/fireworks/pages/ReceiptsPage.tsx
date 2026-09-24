@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useEventSession } from '../lib/eventSession'
-import { useOrganizer } from '../lib/organizer'
+import { useAdmin } from '../lib/admin'
 import { fireworkLabel, formatMoney } from '../lib/types'
 import type { Contribution, Purchase } from '../lib/types'
 import { PasscodeGate } from '../components/PasscodeGate'
@@ -19,8 +19,8 @@ function ReceiptsContent() {
   const { session, lock } = useEventSession()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [pledged, setPledged] = useState(0)
-  // Organizers (signed in via /admin) can record purchases right here.
-  const { isAdmin } = useOrganizer()
+  // An admin (PIN entered on /admin) can record purchases right here.
+  const { pin } = useAdmin()
   const secret = session!.secret
   const eventId = session!.event.id
 
@@ -93,7 +93,7 @@ function ReceiptsContent() {
         )}
       </div>
 
-      {isAdmin && <AddPurchaseForm eventId={eventId} onAdded={load} />}
+      {pin && <AddPurchaseForm pin={pin} eventId={eventId} onAdded={load} />}
     </div>
   )
 }

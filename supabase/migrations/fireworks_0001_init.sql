@@ -5,12 +5,13 @@
 --
 --   1. Everything is prefixed fireworks_, so it can sit beside the cards, the
 --      kitchen, Hexcraft and Hexmap.
---   2. Admin is an allowlist. The old policies granted every table to any
---      `authenticated` user, which was fine when the only account was the
---      organizer's. Here anyone who signs in to the site with a magic link, GitHub
---      or Discord is `authenticated`, so the policies now ask fireworks_is_admin().
+--   2. Admin is the hexmap's PIN, not an account. The old policies granted every
+--      table to any `authenticated` user, which was fine when the only account was
+--      the organizer's. Here anyone can sign in to the site, so there are no table
+--      policies at all: admin reads and writes go through the `admin-action` Edge
+--      Function, which checks ADMIN_PIN and uses the service-role key.
 --
--- Visitors still never touch a table: everything anon does goes through the
+-- Visitors never touch a table either: everything they do goes through the
 -- passcode-checking RPCs at the bottom.
 
 -- ============================================================
@@ -31,7 +32,6 @@ create table public.fireworks_events (
   -- Passcode contributors use to unlock the event. Unique: the passcode alone
   -- identifies the event. Never exposed to anon (RPC-only access).
   secret text not null unique,
-  created_by uuid references auth.users(id) on delete set null default auth.uid(),
   created_at timestamptz not null default now()
 );
 
@@ -64,61 +64,12 @@ create index fireworks_contributions_event_idx on public.fireworks_contributions
 create index fireworks_purchases_event_idx on public.fireworks_purchases (event_id);
 
 -- ============================================================
--- Organizers
---
--- Managed by hand in the SQL editor:
---   insert into public.fireworks_admins (user_id) values ('<auth.users id>');
--- RLS on with no policies, so the client can neither read nor change it.
--- ============================================================
-create table public.fireworks_admins (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now()
-);
-
-alter table public.fireworks_admins enable row level security;
-
-create or replace function public.fireworks_is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (select 1 from public.fireworks_admins where user_id = auth.uid());
-$$;
-
-revoke execute on function public.fireworks_is_admin() from public, anon;
-grant execute on function public.fireworks_is_admin() to authenticated;
-
--- ============================================================
--- RLS: organizers only. Anon has NO table access.
+-- RLS on, no policies: neither anon nor authenticated can reach the tables.
+-- Admin goes through `admin-action` (service role); visitors through the RPCs.
 -- ============================================================
 alter table public.fireworks_events enable row level security;
 alter table public.fireworks_contributions enable row level security;
 alter table public.fireworks_purchases enable row level security;
-
-create policy "organizers read events" on public.fireworks_events
-  for select to authenticated using (public.fireworks_is_admin());
-create policy "organizers insert events" on public.fireworks_events
-  for insert to authenticated with check (public.fireworks_is_admin());
-create policy "organizers update events" on public.fireworks_events
-  for update to authenticated using (public.fireworks_is_admin()) with check (public.fireworks_is_admin());
-create policy "organizers delete events" on public.fireworks_events
-  for delete to authenticated using (public.fireworks_is_admin());
-
-create policy "organizers read contributions" on public.fireworks_contributions
-  for select to authenticated using (public.fireworks_is_admin());
-create policy "organizers delete contributions" on public.fireworks_contributions
-  for delete to authenticated using (public.fireworks_is_admin());
-
-create policy "organizers read purchases" on public.fireworks_purchases
-  for select to authenticated using (public.fireworks_is_admin());
-create policy "organizers insert purchases" on public.fireworks_purchases
-  for insert to authenticated with check (public.fireworks_is_admin());
-create policy "organizers update purchases" on public.fireworks_purchases
-  for update to authenticated using (public.fireworks_is_admin()) with check (public.fireworks_is_admin());
-create policy "organizers delete purchases" on public.fireworks_purchases
-  for delete to authenticated using (public.fireworks_is_admin());
 
 -- ============================================================
 -- Helper: resolve a passcode to its event id (raises on miss)

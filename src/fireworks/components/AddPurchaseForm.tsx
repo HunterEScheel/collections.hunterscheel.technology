@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { supabase } from '../lib/supabase'
+import { callAdminAction } from '../lib/admin'
 import { FIREWORK_TYPES, fireworkLabel, formatMoney } from '../lib/types'
 import type { FireworkType } from '../lib/types'
 
 interface Props {
+  pin: string
   eventId: string
   onAdded: () => void
 }
 
 /** Admin-only: record a firework purchase for the given event. */
-export function AddPurchaseForm({ eventId, onAdded }: Props) {
+export function AddPurchaseForm({ pin, eventId, onAdded }: Props) {
   const [itemName, setItemName] = useState('')
   const [fireworkType, setFireworkType] = useState<FireworkType | ''>('')
   const [cost, setCost] = useState('')
@@ -32,16 +33,20 @@ export function AddPurchaseForm({ eventId, onAdded }: Props) {
     if (!Number.isInteger(parsedQty) || parsedQty <= 0) return setError('Enter a valid quantity.')
 
     setSubmitting(true)
-    const { error: err } = await supabase.from('fireworks_purchases').insert({
-      event_id: eventId,
-      item_name: itemName.trim(),
-      firework_type: fireworkType || null,
-      cost: parsedCost,
-      quantity: parsedQty,
-      notes: notes.trim() || null,
-    })
+    try {
+      await callAdminAction(pin, 'fireworks_add_purchase', {
+        eventId,
+        itemName: itemName.trim(),
+        fireworkType: fireworkType || null,
+        cost: parsedCost,
+        quantity: parsedQty,
+        notes: notes.trim() || null,
+      })
+    } catch (err) {
+      setSubmitting(false)
+      return setError((err as Error).message)
+    }
     setSubmitting(false)
-    if (err) return setError(err.message)
     setItemName('')
     setFireworkType('')
     setCost('')
