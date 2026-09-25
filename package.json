@@ -19,7 +19,8 @@
     "papaparse": "^5.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "supabase": "^2.117.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
