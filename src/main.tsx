@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import { BrowserRouter } from 'react-router-dom'
-import { Root } from './Root.tsx'
+import { AuthGate } from './components/AuthGate.tsx'
+import { Main } from './App.tsx'
 import { SharedLocationView, RESUME_SHARE_KEY } from './components/SharedLocationView.tsx'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,9 +31,7 @@ createRoot(document.getElementById('root')!).render(
     {shareId ? (
       <SharedLocationView shareId={shareId} />
     ) : (
-      <BrowserRouter>
-        <Root />
-      </BrowserRouter>
+      <AuthGate>{(user) => <Main user={user} />}</AuthGate>
     )}
   </StrictMode>,
 )

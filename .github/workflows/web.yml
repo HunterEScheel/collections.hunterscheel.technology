@@ -32,12 +32,9 @@ jobs:
 
       - name: Check the app is actually in the bundle
         run: |
-          # Table names rather than UI copy: a canary that will not go stale
+          # A table name rather than UI copy: a canary that will not go stale
           # the next time a button is reworded.
-          if ! grep -q "collection_cards" dist/assets/*.js \
-            || ! grep -q "kitchen_items" dist/assets/*.js \
-            || ! grep -q "hexcraft_characters" dist/assets/*.js \
-            || ! grep -q "fireworks_events" dist/assets/*.js; then
+          if ! grep -q "collection_cards" dist/assets/*.js; then
             echo "The bundle has no application code in it." >&2
             exit 1
           fi

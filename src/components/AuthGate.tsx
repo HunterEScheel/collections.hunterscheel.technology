@@ -1,53 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-
-/**
- * Magic links and OAuth both return to the bare origin, which is the public
- * portfolio. So the gate notes where sign-in started, and `useResumeAfterSignIn`
- * on the portfolio sends you back there once the session arrives.
- */
-const RESUME_PATH_KEY = 'resume-path';
-const RESUME_MAX_AGE_MS = 60 * 60 * 1000;
-
-function rememberPath() {
-  try {
-    localStorage.setItem(
-      RESUME_PATH_KEY,
-      JSON.stringify({ path: window.location.pathname + window.location.search, at: Date.now() }),
-    );
-  } catch {
-    // Storage unavailable: sign-in still works, it just lands on the portfolio.
-  }
-}
-
-export function useResumeAfterSignIn() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    let raw: string | null = null;
-    try {
-      raw = localStorage.getItem(RESUME_PATH_KEY);
-    } catch {
-      return;
-    }
-    if (!raw) return;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) return; // link not followed yet; keep it for when it is
-      localStorage.removeItem(RESUME_PATH_KEY);
-      try {
-        const { path, at } = JSON.parse(raw) as { path: string; at: number };
-        if (Date.now() - at < RESUME_MAX_AGE_MS && path.startsWith('/') && path !== '/') {
-          navigate(path, { replace: true });
-        }
-      } catch {
-        // Malformed entry: already removed, stay on the portfolio.
-      }
-    });
-  }, [navigate]);
-}
 
 export function AuthGate({ children }: { children: (user: User) => ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -69,7 +22,6 @@ export function AuthGate({ children }: { children: (user: User) => ReactNode }) 
 
   async function oauth(provider: 'github' | 'discord') {
     setError(null);
-    rememberPath();
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: window.location.origin },
@@ -80,7 +32,6 @@ export function AuthGate({ children }: { children: (user: User) => ReactNode }) 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    rememberPath();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: window.location.origin },
@@ -96,7 +47,6 @@ export function AuthGate({ children }: { children: (user: User) => ReactNode }) 
       <div className="flex min-h-screen items-center justify-center">
         <form onSubmit={sendLink} className="w-80 space-y-4 rounded-xl bg-zinc-900 p-6">
           <h1 className="text-lg font-semibold">Sign in</h1>
-          <p className="-mt-2 text-xs text-zinc-500">Cards, Kitchen and Hexcraft share one account.</p>
           <div className="space-y-2">
             {([
               ['github', 'Continue with GitHub'],
@@ -138,9 +88,9 @@ export function AuthGate({ children }: { children: (user: User) => ReactNode }) 
               {error && <p className="text-sm text-red-400">{error}</p>}
             </>
           )}
-          <Link to="/" className="block text-center text-xs text-zinc-500 hover:text-zinc-300">
-            ← Back to the portfolio
-          </Link>
+          <a href="https://jaeg.click" className="block text-center text-xs text-zinc-500 hover:text-zinc-300">
+            ← Back to jaeg.click
+          </a>
         </form>
       </div>
     );
